@@ -1,0 +1,30 @@
+- name: Check for Node Presence
+  stat:
+    path: "/home/{{ host_user }}/.nvm/versions/node/"
+  register: node_status
+
+- name: Install Node
+  when: node_status.stat.exists == false
+  become_user: "{{ host_user }}"
+  shell:
+    cmd: '{{ mg_user_shell.command + '' "nvm install node"'' }}'
+
+- name: Install Rust
+  when: download_rustup_result.changed
+  become_user: "{{ host_user }}"
+  block:
+    - name: Run Install script
+      command: "/home/{{ host_user }}/rustup/install.sh -y"
+    - name: Run Rustup override set stable
+      shell: "/home/{{ host_user }}/.cargo/bin/rustup override set stable"
+      args:
+        executable: /bin/bash
+    - name: Run Rustup update stable
+      shell: "/home/{{ host_user }}/.cargo/bin/rustup update stable"
+      args:
+        executable: /bin/bash
+
+- name: Install Bun
+  when: download_bun_result.changed
+  become_user: "{{ host_user }}"
+  command: "/home/{{ host_user }}/bun/install.sh"

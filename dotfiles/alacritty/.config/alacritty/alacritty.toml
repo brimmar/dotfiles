@@ -1,0 +1,99 @@
+live_config_reload = true
+
+[colors.bright]
+black = "#4C566A"
+blue = "#5e81ac"
+cyan = "#88c0d0"
+green = "#A3BE8C"
+magenta = "#B48EAD"
+red = "#bf616a"
+white = "#abb2bf"
+yellow = "#D7BA7D"
+
+[colors.cursor]
+cursor = "#ECEFF4"
+text = "#3B4252"
+
+[colors.normal]
+black = "#4C566A"
+blue = "#5e81ac"
+cyan = "#88c0d0"
+green = "#A3BE8C"
+magenta = "#B48EAD"
+red = "#bf616a"
+white = "#abb2bf"
+yellow = "#D7BA7D"
+
+[colors.primary]
+background = "#1f2227"
+foreground = "#abb2bf"
+
+[cursor.style]
+blinking = "Never"
+
+[font]
+size = 8.0
+
+[font.bold]
+family = "Hack Nerd Font Mono"
+style = "Bold"
+
+[font.glyph_offset]
+x = 0
+y = 0
+
+[font.italic]
+family = "Hack Nerd Font Mono"
+style = "Italic"
+
+[font.normal]
+family = "Hack Nerd Font Mono"
+style = "Regular"
+
+[font.offset]
+x = 0
+y = 0
+
+[[keyboard.bindings]]
+action = "Paste"
+key = "V"
+mods = "Control|Shift"
+
+[[keyboard.bindings]]
+action = "Copy"
+key = "C"
+mods = "Control|Shift"
+
+[[keyboard.bindings]]
+action = "ResetFontSize"
+key = "Key0"
+mods = "Control"
+
+[[keyboard.bindings]]
+action = "IncreaseFontSize"
+key = "Equals"
+mods = "Control"
+
+[[keyboard.bindings]]
+action = "DecreaseFontSize"
+key = "Minus"
+mods = "Control"
+
+[[keyboard.bindings]]
+action = "SpawnNewInstance"
+key = "N"
+mods = "Control"
+
+[window]
+decorations = "None"
+dynamic_title = true
+
+[window.padding]
+x = 2
+y = 2
+
+[scrolling]
+history = 10000
+
+[selection]
+save_to_clipboard = true

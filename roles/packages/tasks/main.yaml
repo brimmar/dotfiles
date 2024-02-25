@@ -1,0 +1,25 @@
+- name: Ensure Neofetch Config Directory Exists
+  become_user: "{{ host_user }}"
+  file:
+    path: "/home/{{ host_user }}/.config/neofetch/"
+    state: directory
+    mode: 0755
+
+- name: Create Symbolic Link for Bat command
+  become_user: "{{ host_user }}"
+  block:
+    - name: Ensure Local Bin Directory Exists
+      file:
+        path: "/home/{{ host_user }}/.local/bin/"
+        state: directory
+        mode: 0755
+    - name: Make Symbolic Link
+      file:
+        src: /usr/bin/batcat
+        dest: "/home/{{ host_user }}/.local/bin/bat"
+        state: link
+        mode: 0755
+
+- name: Install Delta
+  become_user: "{{ host_user }}"
+  command: "/home/{{ host_user }}/.cargo/bin/cargo install git-delta"

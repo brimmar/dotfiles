@@ -1,0 +1,64 @@
+- hosts: localhost
+  connection: local
+  become: true
+
+  pre_tasks:
+    - name: Update Repositories (PopOS)
+      apt:
+        update_cache: yes
+      when: ansible_distribution in ["Debian", "Ubuntu", "Pop!_OS"]
+      changed_when: False
+
+    - name: Update Repositories (Arch)
+      pacman:
+        update_cache: yes
+      when: ansible_distribution in ["Archlinux"]
+      changed_when: False
+
+    - name: Install Software Properties Common (PopOS)
+      apt:
+        name: software-properties-common
+        state: present
+      when: ansible_distribution in ["Debian", "Ubuntu", "Pop!_OS"]
+
+    - name: Add Docker Repository (PopOS)
+      block:
+        - name: Add Docker Keyring
+          apt_key:
+            url: https://download.docker.com/linux/ubuntu/gpg
+            state: present
+        - name: Add Docker Repository
+          apt_repository:
+            repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable
+            state: present
+
+    - name: Add Brave Browser Repository (PopOS)
+      block:
+        - name: Add Brave Keyring
+          apt_key:
+            url: https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg
+            state: present
+        - name: Add Brave Repository
+          apt_repository:
+            repo: deb [arch=amd64] https://brave-browser-apt-release.s3.brave.com/ stable main
+            state: present
+
+    - name: Add Syncthing Repository (PopOS)
+      block:
+        - name: Add Syncthing keyring
+          apt_key:
+            url: https://syncthing.net/release-key.txt
+            state: present
+        - name: Add Syncthing Repository
+          apt_repository:
+            repo: deb https://apt.syncthing.net/ syncthing stable
+            state: present
+
+  roles:
+    - users
+    - cron
+    - base
+    - languages
+    - packages
+    - programs
+    - config

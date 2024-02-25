@@ -1,0 +1,8 @@
+- name: install cronjob
+  cron:
+    user: ansible
+    name: "Ansible Provision"
+    minute: 0
+    hour: 0
+    state: present
+    job: '/usr/bin/ansible-pull -o -U https://github.com/brimmar/dotfiles.git -e "host_user={{ host_user }}" -e "ssh_email={{ ssh_email }}" > /dev/null'

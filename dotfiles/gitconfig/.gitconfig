@@ -1,0 +1,26 @@
+[core]
+	filemode = false
+	pager = delta
+[init]
+	defaultBranch = main
+[interactive]
+	diffFilter = delta --color-only
+[delta]
+	navigate = true
+	line-numbers = true
+	keep-plus-minus-markers = true
+	plus-style = syntax bold "#334D41"
+	minus-style = syntax bold auto
+	side-by-side = true
+	file-decoration-style = blue bold auto box
+	file-style = yellow bold
+[merge]
+	conflictstyle = diff3
+[diff]
+	colorMoved = default
+[gpg]
+	format = ssh
+[commit]
+	gpgsign = true
+[include]
+	path = user.gitconfig
