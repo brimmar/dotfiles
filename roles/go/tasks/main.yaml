@@ -1,0 +1,13 @@
+- name: Install Golang
+  block:
+    - name: Download Go Binary
+      become_user: "{{ host_user }}"
+      get_url:
+        url: https://go.dev/dl/go1.22.1.linux-amd64.tar.gz
+        dest: "/home/{{ host_user }}/Downloads/"
+        mode: 0755
+
+    - name: Extract Go Binary
+      unarchive:
+        src: "/home/{{ host_user }}/Downloads/go1.22.1.linux-amd64.tar.gz"
+        dest: "/usr/local/"

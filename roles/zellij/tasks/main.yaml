@@ -1,0 +1,3 @@
+- name: Install Zellij
+  become_user: "{{ host_user }}"
+  command: "/home/{{ host_user }}/.cargo/bin/cargo install --locked zellij"

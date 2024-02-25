@@ -1,0 +1,62 @@
+- name: Install Flutter
+  block:
+    - name: Install Flutter
+      when: ansible_distribution in ["Debian", "Ubuntu", "Pop!_OS"]
+      block:
+        - name: Download Flutter dependencies
+          apt:
+            name:
+              - curl
+              - git
+              - unzip
+              - xz-utils
+              - zip
+              - libglu1-mesa
+              - libc6:amd64
+              - libstdc++6:amd64
+              - libbz2-1.0:amd64
+              - libncurses5:amd64
+        - name: Install Android Studio Dependencies
+          apt:
+            name:
+              - libc6:i386
+              - libncurses5:i386
+              - libstdc++6:i386
+              - lib32z1
+              - libbz2-1.0:i386
+        - name: Ensure Android Studio Directory Exists
+          become_user: "{{ host_user }}"
+          file:
+            path: "/home/{{ host_user }}/android_studio/"
+            state: directory
+            mode: 0755
+        - name: Download Android Studio
+          get_url:
+            url: https://redirector.gvt1.com/edgedl/android/studio/ide-zips/2024.1.1.12/android-studio-2024.1.1.12-linux.tar.gz
+            dest: /home/{{ host_user }}/android_studio/android_studio.tar.gz
+            mode: 0755
+        - name: Ensure Unarchived Directory Exists
+          become_user: "{{ host_user }}"
+          file:
+            path: "/home/{{ host_user }}/android_studio/unarchived/"
+            state: directory
+            mode: 0755
+        - name: Install Android Studio
+          unarchive:
+            src: /home/{{ host_user }}/android_studio/android_studio.tar.gz
+            dest: /home/{{ host_user }}/android_studio/unarchived/
+        - name: Ensure Flutter Directory Exists
+          become_user: "{{ host_user }}"
+          file:
+            path: "/home/{{ host_user }}/flutter/"
+            state: directory
+            mode: 0755
+        - name: Download Flutter
+          get_url:
+            url: https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.24.0-stable.tar.xz
+            dest: /home/{{ host_user }}/flutter/flutter.tar.xz
+            mode: 0755
+        - name: Install Flutter
+          unarchive:
+            src: /home/{{ host_user }}/flutter/flutter.tar.xz
+            dest: /usr/bin/

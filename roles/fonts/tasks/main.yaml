@@ -1,0 +1,27 @@
+- name: Install Fonts
+  block:
+    - name: Install Google Fonts
+      when: ansible_distribution in ["Archlinux"]
+      become_user: "ansible"
+      command: paru -S --noconfirm --needed ttf-google-fonts-git
+
+    - name: Install Nerd Fonts
+      become_user: "{{ host_user }}"
+      block:
+        - name: Ensure Nerd Font Directory does not Exists
+          stat:
+            path: "/home/{{ host_user }}/nerd-fonts/"
+          register: nerdfonts_status
+
+        - name: Download Nerd Fonts
+          when: nerdfonts_status.stat.exists == false
+          command:
+            chdir: "/home/{{ host_user }}"
+            cmd: git clone --filter=blob:none --sparse https://github.com/ryanoasis/nerd-fonts
+          register: download_nerdfonts_result
+
+        - name: Install Nerd Fonts
+          when: download_nerdfonts_result.changed
+          shell:
+            chdir: "/home/{{ host_user }}/nerd-fonts/"
+            cmd: git sparse-checkout add patched-fonts/Hack && ./install.sh -s

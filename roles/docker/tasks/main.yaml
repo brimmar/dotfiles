@@ -1,0 +1,89 @@
+- name: Install Docker
+  block:
+    - name: Log Docker installation start
+      lineinfile:
+        path: "{{ log_file }}"
+        line: "{{ ansible_date_time.iso8601 }} - Starting Docker installation"
+      ignore_errors: true
+
+    - name: Add Docker Repository
+      when: ansible_distribution in ["Debian", "Ubuntu", "Pop!_OS"]
+      block:
+        - name: Add Docker Keyring
+          apt_key:
+            url: https://download.docker.com/linux/ubuntu/gpg
+            state: present
+
+        - name: Add Docker Repository
+          apt_repository:
+            repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable
+            state: present
+      rescue:
+        - name: Log Docker repository addition failure
+          lineinfile:
+            path: "{{ log_file }}"
+            line: "{{ ansible_date_time.iso8601 }} - Failed to add Docker repository"
+          ignore_errors: true
+        - name: Fail with overall error message
+          fail:
+            msg: "Failed to add Docker repository. Please check your internet connection and try again."
+
+    - name: Download Docker
+      block:
+        - name: Download Docker for Debian-based systems
+          when: ansible_distribution in ["Debian", "Ubuntu", "Pop!_OS"]
+          apt:
+            name:
+              - docker-ce
+          register: download_docker_status
+        - name: Download Docker for Arch-based systems
+          when: ansible_distribution in ["Archlinux"]
+          pacman:
+            name:
+              - docker
+          register: download_docker_status
+      rescue:
+        - name: Log Docker download failure
+          lineinfile:
+            path: "{{ log_file }}"
+            line: "{{ ansible_date_time.iso8601 }} - Failed to download Docker"
+          ignore_errors: true
+        - name: Fail with overall error message
+          fail:
+            msg: "Failed to install Docker. Please check the package manager and try again."
+
+    - name: Start Docker Service
+      when: ansible_distribution in ["Archlinux"]
+      service:
+        name: "docker"
+        enabled: yes
+        state: started
+      register: docker_service
+      retries: 3
+      delay: 10
+      until: docker_service is success
+
+    - name: Add Docker User
+      when: download_docker_status.changed
+      user:
+        name: "{{ host_user }}"
+        groups: docker
+        append: yes
+      register: docker_user
+  
+  rescue:
+    - name: Log Docker overall installation failure
+      lineinfile:
+        path: "{{ log_file }}"
+        line: "{{ ansible_date_time.iso8601 }} - Docker installation failed"
+      ignore_errors: true
+    - name: Fail with overall error message
+      fail:
+        msg: "Docker installation failed. Please check the logs for more details."
+
+  always:
+    - name: Ensure Docker service is running (if installed)
+      service:
+        name: docker
+        state: started
+      ignore_errors: true

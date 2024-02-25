@@ -1,0 +1,18 @@
+- name: Install Flatpak
+  when: ansible_distribution in ["Archlinux"]
+  block:
+    - name: Install flatpak
+      pacman:
+        name:
+          - flatpak
+
+    - name: Add Flathub Repo
+      block:
+        - name: Add System Wide Repo
+          command: flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+        - name: Add User Wide Repo
+          become_user: "{{ host_user }}"
+          command: flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+
+    - name: Update Flatpak
+      command: flatpak update

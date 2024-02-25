@@ -1,0 +1,19 @@
+- name: Install Posting
+  block:
+    - name: Install Posting using pipx
+      become_user: "{{ host_user }}"
+      ansible.builtin.shell:
+        cmd: "pipx install posting"
+      args:
+        creates: "~/.local/bin/posting"
+
+  rescue:
+    - name: Log Posting installation failure
+      lineinfile:
+        path: "{{ log_file }}"
+        line: "{{ ansible_date_time.iso8601 }} - Posting installation failed"
+      ignore_errors: true
+
+    - name: Fail with overall error message
+      fail:
+        msg: "Posting installation failed. Please check the logs for more details."

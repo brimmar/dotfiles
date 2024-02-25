@@ -1,0 +1,23 @@
+- name: Install pipx
+  block:
+    - name: Install pipx
+      pip:
+        name: pipx
+        state: latest
+
+    - name: Ensure pipx is on PATH
+      ansible.builtin.shell:
+        cmd: "pipx ensurepath"
+      args:
+        creates: "~/.local/bin/pipx"
+
+  rescue:
+    - name: Log pipx installation failure
+      lineinfile:
+        path: "{{ log_file }}"
+        line: "{{ ansible_date_time.iso8601 }} - pipx installation failed"
+      ignore_errors: true
+
+    - name: Fail with overall error message
+      fail:
+        msg: "pipx installation failed. Please check the logs for more details."

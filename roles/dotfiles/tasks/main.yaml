@@ -1,0 +1,133 @@
+- name: Setup Dotfiles
+  block:
+    - name: Log dotfiles setup start
+      lineinfile:
+        path: "{{ log_file }}"
+        line: "{{ ansible_date_time.iso8601 }} - Starting dotfiles setup"
+      ignore_errors: true
+
+    - name: Git Clone Dotfiles
+      become_user: "{{ host_user }}"
+      block:
+        - name: Ensure Dotfiles directory do not exists
+          file:
+            path: "/home/{{ host_user }}/dotfiles"
+            state: absent
+
+        - name: Git Clone
+          command:
+            chdir: "/home/{{ host_user }}"
+            cmd: git clone -n --depth=1 --filter=tree:0 https://github.com/brimmar/dotfiles.git
+            register: git_clone
+            until: git_clone is success
+            retries: 3
+            delay: 5
+
+        - name: Git Sparse Checkout
+          shell:
+            chdir: "/home/{{ host_user }}/dotfiles/"
+            cmd: git sparse-checkout set --no-cone /dotfiles
+
+        - name: Git Checkout
+          shell:
+            chdir: "/home/{{ host_user }}/dotfiles/"
+            cmd: git checkout
+
+    - name: Create Symlinks to config files
+      become_user: "{{ host_user }}"
+      block:
+        - name: Symlink nvim
+          file:
+            src: "/home/{{ host_user }}/dotfiles/dotfiles/nvim/.config/nvim"
+            dest: "/home/{{ host_user }}/.config/nvim"
+            state: link
+            force: yes
+            mode: 0755
+
+        - name: Symlink gitconfig
+          file:
+            src: "/home/{{ host_user }}/dotfiles/dotfiles/gitconfig/.gitconfig"
+            dest: "/home/{{ host_user }}/.gitconfig"
+            state: link
+            force: yes
+            mode: 0755
+
+        - name: Symlink alacritty
+          file:
+            src: "/home/{{ host_user }}/dotfiles/dotfiles/alacritty/.config/alacritty"
+            dest: "/home/{{ host_user }}/.config/alacritty"
+            state: link
+            force: yes
+            mode: 0755
+
+        - name: Symlink bashrc
+          file:
+            src: "/home/{{ host_user }}/dotfiles/dotfiles/oh-my-bash/.bashrc"
+            dest: "/home/{{ host_user }}/.bashrc"
+            state: link
+            force: yes
+            mode: 0755
+
+        - name: Symlink Oh-My-Bash
+          file:
+            src: "/home/{{ host_user }}/dotfiles/dotfiles/oh-my-bash/.oh-my-bash/themes/sexy/sexy.theme.sh"
+            dest: "/home/{{ host_user }}/.oh-my-bash/themes/sexy/sexy.theme.sh"
+            state: link
+            force: yes
+            mode: 0755
+
+        - name: Symlink Zellij
+          file:
+            src: "/home/{{ host_user }}/dotfiles/dotfiles/zellij/.config/zellij"
+            dest: "/home/{{ host_user }}/.config/zellij"
+            state: link
+            force: yes
+            mode: 0755
+
+        - name: Symlink Hypr
+          when: ansible_distribution in ["Archlinux"]
+          block:
+            - name: Ensure Hypr Directory do not exist
+              file:
+                path: "/home/{{ host_user }}/.config/hypr"
+                state: absent
+
+            - name: Symlink Hypr
+              file:
+                src: "/home/{{ host_user }}/dotfiles/dotfiles/hypr/.config/hypr"
+                dest: "/home/{{ host_user }}/.config/hypr"
+                state: link
+                force: yes
+                mode: 0755
+
+    - name: Log dotfiles setup process
+      lineinfile:
+        path: "{{ log_file }}"
+        line: "{{ ansible_date_time.iso8601 }} - Dotfiles setup completed successfully"
+      ignore_errors: true
+
+  rescue:
+    - name: Log dotfiles setup failure
+      lineinfile:
+        path: "{{ log_file }}"
+        line: "{{ ansible_date_time.iso8601 }} - Dotfiles setup failed"
+      ignore_errors: true
+
+    - name: Display error message
+      debug:
+        msg: "Dotfiles setup failed. Please check the logs for more details."
+    
+    - name: Attempt to remove incomplete dotfiles setup
+      file:
+        path: "/home/{{ host_user }}/dotfiles"
+        state: absent
+      ignore_errors: true
+
+  always:
+    - name: Ensure proper permissions for user home directory
+      file:
+        path: "/home/{{ host_user }}"
+        owner: "{{ host_user }}"
+        group: "{{ host_user }}"
+        recurse: yes
+      ignore_errors: true

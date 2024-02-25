@@ -1,0 +1,146 @@
+- name: Install Neovim
+  block:
+    - name: Log Neovim installation start
+      lineinfile:
+        path: "{{ log_file }}"
+        line: "{{ ansible_date_time.iso8601 }} - Starting Neovim installation"
+      ignore_errors: true
+
+    - name: Install dependencies
+      block:
+        - name: Install dependencies
+          when: ansible_distribution in ["Debian", "Ubuntu", "Pop!_OS"]
+          apt:
+            name:
+              - ripgrep
+              - fd-find
+              - fzf
+              - xclip
+              - vim
+            state: present
+
+        - name: Install dependencies
+          when: ansible_distribution in ["Archlinux"]
+          pacman:
+            name:
+              - ripgrep
+              - fd
+              - fzf
+              - xclip
+              - vim
+              - unzip
+            state: present
+      rescue:
+        - name: Log dependency installation failure
+          lineinfile:
+            path: "{{ log_file }}"
+            line: "{{ ansible_date_time.iso8601 }} - Failed to install neovim dependencies"
+          ignore_errors: true
+        - name: Fail with overall error message
+          fail:
+            msg: "Failed to install Neovim dependencies. Please check your package manager and try again."
+
+    - name: Install Neovim
+      when: ansible_distribution in ["Debian", "Ubuntu", "Pop!_OS"]
+      block:
+        - name: Download Neovim
+          block:
+            - name: Ensure Neovim Directory Exists
+              become_user: "{{ host_user }}"
+              file:
+                path: "/home/{{ host_user }}/neovim/"
+                state: directory
+                mode: 0755
+
+            - name: Download Neovim
+              become_user: "{{ host_user }}"
+              get_url:
+                url: https://github.com/neovim/neovim/releases/latest/download/nvim.appimage
+                dest: "/home/{{ host_user }}/neovim/nvim.appimage"
+                mode: 0755
+              register: download_nvim_result
+              until: download_nvim_result is success
+              retries: 3
+              delay: 5
+
+        - name: Install Neovim
+          when: download_nvim_result.changed
+          block:
+            - name: Change permissions of AppImage
+              become_user: "{{ host_user }}"
+              file:
+                dest: "/home/{{ host_user }}/neovim/nvim.appimage"
+                mode: 0755
+
+            - name: Extract AppImage
+              become_user: "{{ host_user }}"
+              command:
+                chdir: "/home/{{ host_user }}/neovim/"
+                cmd: ./nvim.appimage --appimage-extract
+
+            - name: Symlink Nvim Directory to Root
+              file:
+                src: "/home/{{ host_user }}/neovim/squashfs-root"
+                dest: "/squashfs-root"
+                state: link
+                force: yes
+                mode: 0755
+
+            - name: Force Symbolic Link with Neovim Appimage
+              file:
+                src: /squashfs-root/AppRun
+                dest: /usr/bin/nvim
+                state: link
+                force: yes
+                mode: 0755
+
+            - name: Update Alternatives for Neovim
+              shell:
+                cmd: update-alternatives --install /usr/bin/{{ item }} {{ item }} /usr/bin/nvim 60 && update-alternatives --auto {{ item }}
+              with_items:
+                - vi
+                - vim
+                - editor
+          rescue:
+            - name: Log Neovim installation failure
+              lineinfile:
+                path: "{{ log_file }}"
+                line: "{{ ansible_date_time.iso8601 }} - Failed to install Neovim. Please try again."
+
+    - name: Install Neovim
+      when: ansible_distribution in ["Archlinux"]
+      pacman:
+        name:
+          - neovim
+      register: arch_neovim
+      until: arch_neovim is success
+      retries: 3
+      delay: 5
+
+    - name: Log Neovim installation success
+      lineinfile:
+        path: "{{ log_file }}"
+        line: "{{ ansible_date_time.iso8601 }} - Neovim installed successfully"
+      ignore_errors: true
+
+  rescue:
+    - name: Log overall Neovim installation failure
+      lineinfile:
+        path: "{{ log_file }}"
+        line: "{{ ansible_date_time.iso8601 }} - Neovim installation failed"
+      ignore_errors: true
+    - name: Fail with overall error message
+      fail:
+        msg: "Neovim installation failed. Please check the logs for more details."
+
+  always:
+    - name: Ensure Neovim is available in PATH
+      command: which nvim
+      register: nvim_check
+      ignore_errors: true
+
+    - name: Log Neovim availability
+      lineinfile:
+        path: "{{ log_file }}"
+        line: "{{ ansible_date_time.iso8601 }} - Neovim availability: {{ 'Available' if nvim_check.rc == 0 else 'Not available' }}"
+      ignore_errors: true

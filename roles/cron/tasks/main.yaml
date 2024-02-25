@@ -1,0 +1,16 @@
+- name: Setup cronjob for auto update ansible script
+  block:
+    - name: Install crontab
+      when: ansible_distribution in ["Archlinux"]
+      pacman:
+        name: cronie
+        state: present
+
+    - name: Install Cronjob
+      cron:
+        user: ansible
+        name: "Ansible Provision"
+        minute: 0
+        hour: 0
+        state: present
+        job: '/usr/bin/ansible-pull -o -U https://github.com/brimmar/dotfiles.git -e "host_user={{ host_user }}" -e "ssh_email={{ ssh_email }}" > /dev/null'

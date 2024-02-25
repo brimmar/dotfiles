@@ -1,0 +1,126 @@
+- hosts: localhost
+  connection: local
+  become: true
+
+  vars:
+    log_file: "/var/log/ansible_setup.log"
+
+  pre_tasks:
+    - name: Ensure log directory exists
+      file:
+        path: "/var/log"
+        state: directory
+        mode: '0755'
+      ignore_errors: true
+
+    - name: Log playbook start
+      lineinfile:
+        path: "{{ log_file }}"
+        line: "{{ ansible_date_time.iso8601 }} - Playbook started"
+        create: yes
+      ignore_errors: true
+
+    - name: Ensure required variables are set
+      assert:
+        that:
+          - host_user is defined
+          - ssh_email is defined
+        fail_msg: "Required variables (host_user and/or ssh_email) are not set"
+      ignore_errors: false
+
+    - name: Stop Bluetooth Service
+      block:
+        - name: Stop and disable bluetooth service
+          service:
+            name: bluetooth.service
+            state: stopped
+            enabled: no
+          when: ansible_distribution in ["Debian", "Ubuntu", "Pop!_OS"]
+      rescue:
+        - name: Log Bluetooth service stop failure
+          lineinfile:
+            path: "{{ log_file }}"
+            line: "{{ ansible_date_time.iso8601 }} - Failed to stop Bluetooth service"
+          ignore_errors: true
+        - name: Debug Bluetooth service failure
+          debug:
+            msg: "Failed to stop Bluetooth service. This is non-critical, continuing..."
+
+    - name: Update package cache
+      block:
+        - name: Update apt cache
+          apt:
+            update_cache: yes
+          changed_when: False
+          when: ansible_distribution in ["Debian", "Ubuntu", "Pop!_OS"]
+
+        - name: Update pacman cache
+          pacman:
+            update_cache: yes
+          changed_when: False
+          when: ansible_distribution in ["Archlinux"]
+
+        - name: Install Base Devel
+          pacman:
+            name: base-devel
+            state: present
+          when: ansible_distribution in ["Archlinux"]
+      rescue:
+        - name: Log package cache update failure
+          lineinfile:
+            path: "{{ log_file }}"
+            line: "{{ ansible_date_time.iso8601 }} - Failed to update package cache"
+          ignore_errors: true
+        - name: Fail with overall error message
+          fail:
+            msg: "Failed to update package cache. Please check your internet connection and try again."
+
+  roles:
+    - { role: disable_locks, tags: disable_locks }
+    - { role: alacritty, tags: alacritty }
+    - { role: bat, tags: bat }
+    - { role: brave, tags: brave }
+    - { role: bun, tags: bun }
+    - { role: cron, tags: cron }
+    - { role: delta, tags: delta }
+    - { role: discord, tags: discord }
+    - { role: docker, tags: docker }
+    - { role: flatpak, tags: flatpak }
+    - { role: fonts, tags: fonts }
+    - { role: gnome_tweaks, tags: gnome_tweaks }
+    - { role: go, tags: go }
+    - { role: gum, tags: gum }
+    - { role: lutris, tags: lutris }
+    - { role: musikcube, tags: musikcube }
+    - { role: neovim, tags: neovim }
+    - { role: node, tags: node }
+    - { role: nvm, tags: nvm }
+    - { role: obsidian, tags: obsidian }
+    - { role: oh_my_bash, tags: oh_my_bash }
+    - { role: packages, tags: packages }
+    - { role: paru, tags: paru }
+    # - { role: posting, tags: posting }
+    - { role: psutil, tags: psutil }
+    - { role: python, tags: python }
+    - { role: rust, tags: rust }
+    - { role: rustup, tags: rustup }
+    - { role: flutter, tags: flutter }
+    - { role: ssh, tags: ssh }
+    - { role: stremio, tags: stremio }
+    - { role: syncthing, tags: syncthing }
+    - { role: telegram, tags: telegram }
+    - { role: test_shell, tags: test_shell }
+    - { role: users, tags: users }
+    - { role: vi, tags: vi }
+    - { role: vlc, tags: vlc }
+    - { role: whatsapp, tags: whatsapp }
+    - { role: zellij, tags: zellij }
+    - { role: zjstatus, tags: zjstatus }
+    - { role: dotfiles, tags: dotfiles }
+
+  post_tasks:
+    - name: Log playbook completion
+      lineinfile:
+        path: "{{ log_file }}"
+        line: "{{ ansible_date_time.iso8601 }} - Playbook completed successfully."
+      ignore_errors: true

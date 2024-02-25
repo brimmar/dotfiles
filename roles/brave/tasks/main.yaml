@@ -1,0 +1,26 @@
+- name: Install brave
+  block:
+    - name: Install Brave
+      when: ansible_distribution in ["Debian", "Ubuntu", "Pop!_OS"]
+      block:
+        - name: Add Brave Browser Repository
+          block:
+            - name: Add Brave Keyring
+              apt_key:
+                url: https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg
+                state: present
+
+            - name: Add Brave Repository
+              apt_repository:
+                repo: deb [arch=amd64] https://brave-browser-apt-release.s3.brave.com/ stable main
+                state: present
+
+        - name: Install Brave
+          apt:
+            name:
+              - brave-browser
+
+    - name: Install Brave
+      when: ansible_distribution in ["Archlinux"]
+      become_user: "ansible"
+      command: paru -S --noconfirm --needed brave-bin

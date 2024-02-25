@@ -1,0 +1,31 @@
+- name: Install Rust
+  when: download_rustup_result.changed
+  become_user: "{{ host_user }}"
+  block:
+    - name: Run Install script
+      command: "/home/{{ host_user }}/rustup/install.sh -y"
+
+    - name: Run Rustup override set stable
+      shell: "/home/{{ host_user }}/.cargo/bin/rustup override set stable"
+      args:
+        executable: /bin/bash
+
+    - name: Run Rustup update stable
+      shell: "/home/{{ host_user }}/.cargo/bin/rustup update stable"
+      args:
+        executable: /bin/bash
+  rescue:
+    - name: Log Rust installation failure
+      lineinfile:
+        path: "{{ log_file }}"
+        line: "{{ ansible_date_time.iso8601 }} - Rust installation failed"
+      ignore_errors: true
+    - name: Fail with overall error message
+      fail:
+        msg: "Rust installation failed. Please check your internet connection and try again."
+
+- name: Log Rust installation success
+  lineinfile:
+    path: "{{ log_file }}"
+    line: "{{ ansible_date_time.iso8601 }} - Rust installed successfully"
+  ignore_errors: true

@@ -1,0 +1,90 @@
+- name: Install packages
+  block:
+    - name: Log package installation start
+      lineinfile:
+        path: "{{ log_file }}"
+        line: "{{ ansible_date_time.iso8601 }} - Starting package installation"
+      ignore_errors: true
+
+    - name: Install PopOS packages
+      when: ansible_distribution in ["Debian", "Ubuntu", "Pop!_OS"]
+      block:
+        - name: Install packages
+          apt:
+            name:
+              - build-essential
+              - libssl-dev
+              - libgtk-3-dev
+              - libgtk-4-dev
+              - libayatana-appindicator3-dev
+              - librsvg2-dev
+              - git-all
+              - btop
+              - exa
+              - pass
+              - kdeconnect
+            state: present
+          register: pop_packages
+          until: pop_packages is success
+          retries: 3
+          delay: 5
+      rescue:
+        - name: Log PopOS package installation failure
+          lineinfile:
+            path: "{{ log_file }}"
+            line: "{{ ansible_date_time.iso8601 }} - Failed to install PopOS packages"
+          ignore_errors: true
+        - name: Fail with overall error message
+          fail:
+            msg: "Failed to install PopOS packages. Please check your package manager and try again."
+
+    - name: Install Arch Packages
+      when: ansible_distribution in ["Archlinux"]
+      block:
+        - name: Install packages
+          pacman:
+            name:
+              - openssl
+              - gtk3
+              - gtk-layer-shell
+              - libappindicator-gtk3
+              - librsvg
+              - btop
+              - exa
+              - pass
+              - kdeconnect
+              - brightnessctl
+              - playerctl
+              - kwallet-pam
+              - jq
+              - gtk4
+            state: present
+          register: arch_packages
+          until: arch_packages is success
+          retries: 3
+          delay: 5
+      rescue:
+        - name: Log Arch package installation failure
+          lineinfile:
+            path: "{{ log_file }}"
+            line: "{{ ansible_date_time.iso8601 }} - Failed to install Arch packages"
+          ignore_errors: true
+        - name: Fail with overall error message
+          fail:
+            msg: "Failed to install Arch packages. Please check yous package manager and try again."
+
+    - name: Log package installation success
+      lineinfile:
+        path: "{{ log_file }}"
+        line: "{{ ansible_date_time.iso8601 }} - Packages installed successfully"
+      ignore_errors: true
+
+  rescue:
+    - name: Log overall package installation failure
+      lineinfile:
+        path: "{{ log_file }}"
+        line: "{{ ansible_date_time.iso8601 }} - Package installation failure"
+      ignore_errors: true
+    - name: Fail with overall error message
+      fail:
+        msg: "Package installation failed. Please check the logs for more details."

@@ -1,0 +1,21 @@
+- name: Install NVM
+  become_user: "{{ host_user }}"
+  block:
+    - name: Download NVM
+      block:
+        - name: Ensure NVM Directory Exists
+          file:
+            path: "/home/{{ host_user }}/nvm/"
+            state: directory
+            mode: 0755
+
+        - name: Download NVM
+          get_url:
+            url: https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.2/install.sh
+            dest: "/home/{{ host_user }}/nvm/install.sh"
+            mode: 0755
+          register: download_nvm_result
+
+    - name: Install NVM
+      when: download_nvm_result.changed
+      command: "/home/{{ host_user }}/nvm/install.sh"
