@@ -12,6 +12,19 @@ ansible-pull -K -U https://github.com/brimmar/dotfiles.git -e "host_user=<userna
 
 Note: You don't need to clone the repository locally; ansible-pull will fetch the configuration directly from the remote repository and apply it to your system.
 
+### Dotfiles
+
+If you are interested on just the dotfiles, you can do this:
+
+```bash
+git clone -n --depth=1 --filter=tree:0 https://github.com/brimmar/dotfiles.git
+cd dotfiles
+git sparse-checkout set --no-cone dotfiles
+git checkout
+```
+
+And then stow or symlink it yourself!
+
 ## Supported Systems
 
 At the moment, this Ansible configuration is tailored specifically for Pop!\_OS. However, I plan to extend support to other Linux distributions like Arch Linux and Ubuntu in the near future.
