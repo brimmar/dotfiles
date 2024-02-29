@@ -23,3 +23,22 @@
 - name: Install Delta
   become_user: "{{ host_user }}"
   command: "/home/{{ host_user }}/.cargo/bin/cargo install git-delta"
+
+- name: Install Zellij
+  become_user: "{{ host_user }}"
+  command: "/home/{{ host_user }}/.cargo/bin/cargo install --locked zellij"
+
+- name: Install Zjstatus Plugin for Zellij
+  become_user: "{{ host_user }}"
+  block:
+    - name: Add Wasm32-Wasi Target to Rustup
+      command: "rustup target add wasm32-wasi"
+    - name: Clone Zjstatus Repository
+      git:
+        dest: "/home/{{ host_user }}/zjstatus/"
+        recursive: no
+        repo: "https://github.com/dj95/zjstatus.git"
+    - name: Build zjstatus from source
+      command:
+        chdir: "/home/{{ host_user }}/zjstatus/"
+        cmd: "cargo build --release"

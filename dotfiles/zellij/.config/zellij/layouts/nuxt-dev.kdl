@@ -1,0 +1,30 @@
+layout {
+	pane size=1 borderless=true {
+		plugin location="file:$HOME/zjstatus/target/wasm32-wasi/release/zjstatus.wasm" {
+			format_left "{mode}"
+			format_center "{tabs}  "
+			format_right "{datetime}"
+			format_space "#[bg=#2C2C2C]"
+
+			mode_normal "#[bg=#7bf1a8,fg=black] 󰀘 "
+			mode_tab "#[bg=#ffadad,fg=black] 󰀘 "
+			mode_pane "#[bg=#fdffb6,fg=black] 󰀘 "
+			mode_locked "#[bg=#2C2C2C,bold]   {name} "
+
+			tab_normal "#[fg=#6C7086] {index} "
+			tab_active "#[fg=#9399B2,bg=#454545,bold,italic] {index} "
+
+			datetime "#[fg=#9399B2,bold,bg=#454545]  {format}"
+			datetime_format "%A, %d %b %Y %H:%M"
+			datetime_timezone "America/Sao_Paulo"
+		}
+	}
+	pane split_direction="vertical" {
+		pane edit="."
+		pane split_direction="horizontal" {
+			pane command="npm" {
+				args "run" "dev"
+			}
+		}
+	}
+}
