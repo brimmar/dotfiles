@@ -1,0 +1,53 @@
+layout {
+	pane size=1 borderless=true {
+		plugin location="file:$HOME/zjstatus/target/wasm32-wasi/release/zjstatus.wasm" {
+			format_left "{mode}#[bg=#2C2C2C] {tabs}"
+			format_center "#[fg=9399B2,bold,bg=#2C2C2C]{session}"
+			format_right "{command_disk_usage} {command_memory_usage} {datetime}"
+			format_space "#[bg=#2C2C2C]"
+
+			mode_normal "#[bg=#7bf1a8,fg=black] 󰀘 "
+			mode_tab "#[bg=#ffadad,fg=black] 󰀘 "
+			mode_pane "#[bg=#fdffb6,fg=black] 󰀘 "
+			mode_locked "#[bg=#2C2C2C,bold]   {name} "
+
+			command_memory_usage_command "bash -c \"free | grep 'Mem' | awk '{usage=int((($2-$7)/$2)*100); print usage}'\""
+			command_memory_usage_format "#[fg=#FFADAD]▎󰍛 {stdout}%"
+			command_memory_usage_interval "60"
+			command_memory_usage_rendermode "static"
+
+			command_disk_usage_command "bash -c \"df -h | grep '/$' | awk '{print $5}'\""
+			command_disk_usage_format "#[fg=#caffbf]▎󰗮 {stdout}"
+			command_disk_usage_interval "60"
+			command_disk_usage_rendermode "static"
+
+			tab_normal "#[fg=#6C7086,bg=#2C2C2C]  {index}. {name}  "
+			tab_active "#[bg=#2C2C2C,fg=#1f2227]#[fg=#9399B2,bold,italic] {index}. {name} #[bg=#2C2C2C,fg=#1f2227]"
+
+			datetime "#[fg=#9399B2,bold]▎󰃭 {format} "
+			datetime_format "%A, %d %b %Y 󰥔 %H:%M"
+			datetime_timezone "America/Sao_Paulo"
+		}
+	}
+	pane split_direction="vertical" {
+		pane edit="."
+		pane split_direction="horizontal" {
+			pane split_direction="horizontal" stacked=true {
+				pane command="sail" start_suspended=true {
+					args "test"
+				}
+				pane command="sail" start_suspended=true {
+					args "up"
+				}
+			}
+			pane split_direction="horizontal" {
+				pane command="sail" start_suspended=true {
+					args "tinker"
+				}
+				pane command="php" start_suspended=true {
+					args "artisan db"
+				}
+			}
+		}
+	}
+}
