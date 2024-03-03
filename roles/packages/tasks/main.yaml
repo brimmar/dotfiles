@@ -7,6 +7,7 @@
 
 - name: Create Symbolic Link for Bat command
   become_user: "{{ host_user }}"
+  when: ansible_distribution in ["Debian", "Ubuntu", "Pop!_OS"]
   block:
     - name: Ensure Local Bin Directory Exists
       file:

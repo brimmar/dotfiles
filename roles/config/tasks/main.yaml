@@ -29,6 +29,7 @@
     cmd: git sparse-checkout add patched-fonts/Hack && ./install.sh -s
 
 - name: Stop Bluetooth Service
+  when: ansible_distribution in ["Debian", "Ubuntu", "Pop!_OS"]
   service:
     name: bluetooth.service
     state: stopped
@@ -105,6 +106,7 @@
         mode: 0755
 
 - name: Configure Desktop Environment
+  when: ansible_distribution in ["Debian", "Ubuntu", "Pop!_OS"]
   become_user: "{{ host_user }}"
   block:
     - name: Background
