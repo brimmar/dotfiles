@@ -104,6 +104,14 @@
         state: link
         force: yes
         mode: 0755
+    - name: Symlink Hypr
+      when: ansible_distribution in ["Archlinux"]
+      file:
+        src: "/home/{{ host_user }}/dotfiles/dotfiles/hypr/.config/hypr"
+        dest: "/home/{{ host_user }}/.config/hypr"
+        state: link
+        force: yes
+        mode: 0755
 
 - name: Configure Desktop Environment
   when: ansible_distribution in ["Debian", "Ubuntu", "Pop!_OS"]
