@@ -30,6 +30,7 @@
           - pass
           - brave-browser
           - kdeconnect
+          - ripgrep
 
     - name: Install pip dependencies for dconf
       become_user: "{{ host_user }}"
@@ -150,6 +151,7 @@
           - neovim
           - unzip
           - bash-completion
+          - ripgrep
         state: present
 
     - name: Install yay
