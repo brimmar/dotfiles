@@ -1,0 +1,6 @@
+[user]
+	name = {{ git_name }}
+	email = {{ git_email }}
+	signingkey = /home/{{ host_user }}/.ssh/id_ed25519.pub
+[core]
+	excludesfile = /home/{{ host_user }}/global.gitignore

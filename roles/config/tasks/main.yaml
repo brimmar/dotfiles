@@ -113,6 +113,12 @@
         force: yes
         mode: 0755
 
+- name: Templating User Git Config File
+  become_user: "{{ host_user }}"
+  template:
+    src: user.gitconfig
+    dest: "/home/{{ host_user }}/user.gitconfig"
+
 - name: Configure Desktop Environment
   when: ansible_distribution in ["Debian", "Ubuntu", "Pop!_OS"]
   become_user: "{{ host_user }}"
