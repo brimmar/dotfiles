@@ -45,3 +45,8 @@
       command:
         chdir: "/home/{{ host_user }}/zjstatus/"
         cmd: "/home/{{ host_user }}/.cargo/bin/cargo build --release --target wasm32-wasi"
+
+- name: Install Google Fonts
+  when: ansible_distribution in ["Archlinux"]
+  become_user: "ansible"
+  command: yay -S --no-confirm --needed ttf-google-fonts-git
