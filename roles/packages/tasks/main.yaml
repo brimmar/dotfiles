@@ -36,7 +36,7 @@
       git:
         dest: "/home/{{ host_user }}/zjstatus/"
         recursive: no
-        repo: "https://github.com/dj95/zjstatus.git"
+        repo: "https://github.com/brimmar/zjstatus.git"
     - name: Add Wasm32-Wasi Target to Rustup
       command:
         chdir: "/home/{{ host_user }}/zjstatus/"
