@@ -172,10 +172,6 @@ alias php-version='_php-version() { sudo update-alternatives --set php /usr/bin/
 # Comando pro laravel sail
 alias sail='[ -f sail ] && sh sail || sh vendor/bin/sail'
 
-# Comandos pro Planetscale
-mkdir -p $HOME/.config/planetscale
-alias pscale="docker run -e HOME=/tmp -v $HOME/.config/planetscale:/tmp/.config/planetscale --user $(id -u):$(id -g) --rm -it -p 3306:3306/tcp planetscale/pscale:latest"
-
 # Rust Cargo
 . "$HOME/.cargo/env"
 

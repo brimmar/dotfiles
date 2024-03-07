@@ -165,6 +165,3 @@
       become_user: "ansible"
       when: ansible_distribution in ["Archlinux"]
       command: yay -S --noconfirm --needed musikcube
-
-- name: Install Planetscale
-  command: docker pull planetscale/pscale:latest
