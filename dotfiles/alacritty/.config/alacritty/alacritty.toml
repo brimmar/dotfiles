@@ -79,11 +79,6 @@ action = "DecreaseFontSize"
 key = "Minus"
 mods = "Control"
 
-[[keyboard.bindings]]
-action = "SpawnNewInstance"
-key = "N"
-mods = "Control"
-
 [window]
 decorations = "None"
 dynamic_title = true

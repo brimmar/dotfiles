@@ -130,6 +130,7 @@
           - libxkbcommon
           - openssl
           - gtk3
+          - gtk-layer-shell
           - libappindicator-gtk3
           - librsvg
           - git
@@ -156,6 +157,7 @@
           - brightnessctl
           - playerctl
           - fd
+          - kwallet-pam
         state: present
 
     - name: Install yay
