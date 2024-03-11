@@ -153,6 +153,7 @@
           - bash-completion
           - ripgrep
           - brightnessctl
+          - playerctl
         state: present
 
     - name: Install yay
