@@ -152,6 +152,7 @@
           - unzip
           - bash-completion
           - ripgrep
+          - brightnessctl
         state: present
 
     - name: Install yay
