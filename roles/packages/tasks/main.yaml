@@ -32,7 +32,12 @@
 - name: Install Zjstatus Plugin for Zellij
   become_user: "{{ host_user }}"
   block:
+    - name: Ensure Zjstatus is not already installed
+      stat:
+        path: "/home/{{ host_user }}/zjstatus/"
+      register: zjstatus_status
     - name: Clone Zjstatus Repository
+      when: not zjstatus_status.stat.exists
       git:
         dest: "/home/{{ host_user }}/zjstatus/"
         recursive: no
