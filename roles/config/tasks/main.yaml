@@ -41,7 +41,7 @@
   block:
     - name: Ensure Dotfiles directory do not exists
       file:
-        src: "/home/{{ host_user }}/dotfiles"
+        path: "/home/{{ host_user }}/dotfiles"
         state: absent
     - name: Git Clone
       command:
@@ -113,7 +113,7 @@
       block:
         - name: Ensure Hypr Directory do not exist
           file:
-            src: "/home/{{ host_user }}/.config/hypr"
+            path: "/home/{{ host_user }}/.config/hypr"
             state: absent
         - name: Symlink Hypr
           file:
