@@ -31,6 +31,7 @@
           - brave-browser
           - kdeconnect
           - ripgrep
+          - fd-find
 
     - name: Install pip dependencies for dconf
       become_user: "{{ host_user }}"
@@ -154,6 +155,7 @@
           - ripgrep
           - brightnessctl
           - playerctl
+          - fd
         state: present
 
     - name: Install yay
