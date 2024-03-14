@@ -39,6 +39,10 @@
 - name: Git Clone Dotfiles
   become_user: "{{ host_user }}"
   block:
+    - name: Ensure Dotfiles directory do not exists
+      file:
+        src: "/home/{{ host_user }}/dotfiles"
+        state: absent
     - name: Git Clone
       command:
         chdir: "/home/{{ host_user }}"
