@@ -158,6 +158,7 @@
           - playerctl
           - fd
           - kwallet-pam
+          - jq
         state: present
 
     - name: Install yay
