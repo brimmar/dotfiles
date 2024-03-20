@@ -159,6 +159,7 @@
           - fd
           - kwallet-pam
           - jq
+          - gtk4
         state: present
 
     - name: Install yay
