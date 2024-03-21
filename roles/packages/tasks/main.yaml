@@ -54,4 +54,4 @@
 - name: Install Google Fonts
   when: ansible_distribution in ["Archlinux"]
   become_user: "ansible"
-  command: yay -S --noconfirm --needed ttf-google-fonts-git
+  command: paru -S --noconfirm --needed ttf-google-fonts-git
