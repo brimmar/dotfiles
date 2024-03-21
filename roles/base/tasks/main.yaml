@@ -162,25 +162,25 @@
           - gtk4
         state: present
 
-    - name: Install yay
+    - name: Install paru
       become_user: "{{ host_user }}"
       block:
-        - name: Clone yay repository
+        - name: Clone paru repository
           git:
-            dest: "/home/{{ host_user }}/yay-bin/"
+            dest: "/home/{{ host_user }}/paru/"
             recursive: no
-            repo: "https://aur.archlinux.org/yay-bin.git"
+            repo: "https://aur.archlinux.org/paru.git"
 
         - name: Give permission
           file:
-            path: "/home/{{ host_user }}/yay-bin"
+            path: "/home/{{ host_user }}/paru"
             state: directory
             owner: "{{ host_user }}"
             mode: 0755
 
         - name: Run makepkg
           command:
-            chdir: "/home/{{ host_user }}/yay-bin/"
+            chdir: "/home/{{ host_user }}/paru/"
             cmd: makepkg -si --noconfirm
 
     - name: Configure Docker User
@@ -200,7 +200,7 @@
 
     - name: Install Brave
       become_user: "ansible"
-      command: yay -S --noconfirm --needed brave-bin
+      command: paru -S --noconfirm --needed brave-bin
 
     - name: Add Flathub Repo
       block:
