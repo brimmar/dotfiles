@@ -1,0 +1,27 @@
+- name: Install Oh-my-bash!
+  become_user: "{{ host_user }}"
+  block:
+    - name: Download Oh-my-bash!
+      block:
+        - name: Ensure Oh-my-bash! Directory Exists
+          file:
+            path: "/home/{{ host_user }}/ohmybash/"
+            state: directory
+            mode: 0755
+
+        - name: Download Oh-my-bash!
+          get_url:
+            url: https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh
+            dest: "/home/{{ host_user }}/ohmybash/install.sh"
+            mode: 0755
+          register: download_ohmybash_result
+
+    - name: Ensure Oh-My-Bash Install
+      when: download_ohmybash_result.changed
+      file:
+        path: "/home/{{ host_user }}/.oh-my-bash"
+        state: absent
+
+    - name: Run Script to Install Oh-my-bash!
+      when: download_ohmybash_result.changed
+      command: "/home/{{ host_user }}/ohmybash/install.sh"

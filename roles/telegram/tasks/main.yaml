@@ -1,0 +1,6 @@
+- name: Install Telegram
+  become_user: "{{ host_user }}"
+  flatpak:
+    name: org.telegram.desktop
+    state: present
+    method: user

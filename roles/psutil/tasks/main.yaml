@@ -1,0 +1,5 @@
+- name: Install pip dependencies for dconf
+  become_user: "{{ host_user }}"
+  pip:
+    name: psutil
+    state: present

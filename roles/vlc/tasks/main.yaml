@@ -1,0 +1,6 @@
+- name: Install VLC
+  become_user: "{{ host_user }}"
+  flatpak:
+    name: org.videolan.VLC
+    state: present
+    method: user

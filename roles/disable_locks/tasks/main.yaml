@@ -1,0 +1,61 @@
+- name: Disable some things first
+  when: ansible_distribution in ["Debian", "Ubuntu", "Pop!_OS"]
+  become_user: "{{ host_user }}"
+  block:
+    - name: Screensaver
+      block:
+        - name: Color Shading Type
+          dconf:
+            key: "/org/gnome/desktop/screensaver/color-shading-type"
+            value: "'solid'"
+            state: present
+
+        - name: Lock Delay
+          dconf:
+            key: "/org/gnome/desktop/screensaver/lock-delay"
+            value: "uint32 0"
+            state: present
+
+        - name: Lock
+          dconf:
+            key: "/org/gnome/desktop/screensaver/lock-enabled"
+            value: "false"
+            state: present
+
+        - name: Picture Options
+          dconf:
+            key: "/org/gnome/desktop/screensaver/picture-options"
+            value: "'zoom'"
+            state: present
+
+        - name: Picture URI
+          dconf:
+            key: "/org/gnome/desktop/screensaver/picture-uri"
+            value: "'file:///usr/share/backgrounds/pop/nick-nazzaro-space-blue.png'"
+            state: present
+
+        - name: Primary Color
+          dconf:
+            key: "/org/gnome/desktop/screensaver/primary-color"
+            value: "'#000000'"
+            state: present
+
+        - name: Secondary Color
+          dconf:
+            key: "/org/gnome/desktop/screensaver/secondary-color"
+            value: "'#000000'"
+            state: present
+
+        - name: Lock On Suspend
+          dconf:
+            key: "/org/gnome/desktop/screensaver/ubuntu-lock-on-suspend"
+            value: "false"
+            state: present
+
+    - name: Session
+      block:
+        - name: Idle Delay
+          dconf:
+            key: "/org/gnome/desktop/session/idle-delay"
+            value: "uint32 0"
+            state: present

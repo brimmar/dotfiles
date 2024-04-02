@@ -1,0 +1,32 @@
+- name: Install Syncthing
+  block:
+    - name: Install Syncthing
+      when: ansible_distribution in ["Debian", "Ubuntu", "Pop!_OS"]
+      block:
+        - name: Add Syncthing Repository
+          block:
+            - name: Add Syncthing keyring
+              apt_key:
+                url: https://syncthing.net/release-key.txt
+                state: present
+
+            - name: Add Syncthing Repository
+              apt_repository:
+                repo: deb https://apt.syncthing.net/ syncthing stable
+                state: present
+
+        - name: Install APT Syncthing Package
+          apt:
+            name: syncthing
+
+    - name: Install Syncthing
+      when: ansible_distribution in ["Archlinux"]
+      pacman:
+        name:
+          - syncthing
+
+    - name: Enable syncthing service
+      service:
+        name: "syncthing@{{ host_user }}.service"
+        enabled: yes
+        state: started

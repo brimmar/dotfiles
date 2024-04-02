@@ -1,0 +1,6 @@
+- name: Install Whatsapp
+  become_user: "{{ host_user }}"
+  flatpak:
+    name: io.github.mimbrero.WhatsAppDesktop
+    state: present
+    method: user

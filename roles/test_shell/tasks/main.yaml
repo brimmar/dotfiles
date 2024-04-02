@@ -1,0 +1,15 @@
+- name: Test for shells to run nvm on
+  block:
+    - name: Test
+      command: "which {{ item }}"
+      with_items:
+        - bash
+      register: mg_shell_path
+
+    - name: set found path
+      set_fact:
+        mg_found_path: "{{ mg_shell_path.results | selectattr('stdout', 'defined') | map(attribute = 'stdout') | list | first }}"
+
+    - name: set bash command
+      set_fact:
+        mg_user_shell: { "command": "{{ mg_found_path }} -ic", "alias": "bash" }

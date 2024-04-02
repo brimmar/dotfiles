@@ -1,0 +1,14 @@
+- name: Download Rustup
+  become_user: "{{ host_user }}"
+  block:
+    - name: Ensure Rust Directory Exists
+      file:
+        path: "/home/{{ host_user }}/rustup/"
+        state: directory
+        mode: 0755
+    - name: Download Rustup
+      get_url:
+        url: https://sh.rustup.rs
+        dest: "/home/{{ host_user }}/rustup/install.sh"
+        mode: 0755
+      register: download_rustup_result

@@ -1,0 +1,11 @@
+- name: Create SSH Key
+  become_user: "{{ host_user }}"
+  block:
+    - name: Ensures SSH Key Does not Exists
+      stat:
+        path: "/home/{{ host_user }}/.ssh/id_ed25519"
+      register: ssh_status
+
+    - name: Create SSH Key
+      when: ssh_status.stat.exists == false
+      command: ssh-keygen -t ed25519 -C "{{ ssh_email }}" -q -N "" -f "/home/{{ host_user }}/.ssh/id_ed25519"

@@ -1,0 +1,89 @@
+- name: Install Neovim
+  block:
+    - name: Install dependencies
+      block:
+        - name: Install dependencies
+          when: ansible_distribution in ["Debian", "Ubuntu", "Pop!_OS"]
+          apt:
+            name:
+              - ripgrep
+              - fd-find
+              - fzf
+              - xclip
+              - vim
+
+        - name: Install dependencies
+          when: ansible_distribution in ["Archlinux"]
+          pacman:
+            name:
+              - ripgrep
+              - fd
+              - fzf
+              - xclip
+              - vim
+              - unzip
+
+    - name: Install Neovim
+      when: ansible_distribution in ["Debian", "Ubuntu", "Pop!_OS"]
+      block:
+        - name: Download Neovim
+          block:
+            - name: Ensure Neovim Directory Exists
+              become_user: "{{ host_user }}"
+              file:
+                path: "/home/{{ host_user }}/neovim/"
+                state: directory
+                mode: 0755
+
+            - name: Download Neovim
+              become_user: "{{ host_user }}"
+              get_url:
+                url: https://github.com/neovim/neovim/releases/latest/download/nvim.appimage
+                dest: "/home/{{ host_user }}/neovim/nvim.appimage"
+                mode: 0755
+              register: download_nvim_result
+
+        - name: Install Neovim
+          when: download_nvim_result.changed
+          block:
+            - name: Change permissions of AppImage
+              become_user: "{{ host_user }}"
+              file:
+                dest: "/home/{{ host_user }}/neovim/nvim.appimage"
+                mode: 0755
+
+            - name: Extract AppImage
+              become_user: "{{ host_user }}"
+              command:
+                chdir: "/home/{{ host_user }}/neovim/"
+                cmd: ./nvim.appimage --appimage-extract
+
+            - name: Symlink Nvim Directory to Root
+              file:
+                src: "/home/{{ host_user }}/neovim/squashfs-root"
+                dest: "/squashfs-root"
+                state: link
+                force: yes
+                mode: 0755
+
+            - name: Force Symbolic Link with Neovim Appimage
+              file:
+                src: /squashfs-root/AppRun
+                dest: /usr/bin/nvim
+                state: link
+                force: yes
+                mode: 0755
+
+            - name: Update Alternatives for Neovim
+              shell:
+                cmd: update-alternatives --install /usr/bin/{{ item }} {{ item }} /usr/bin/nvim 60 && update-alternatives --auto {{ item }}
+              with_items:
+                - vi
+                - vim
+                - editor
+
+    - name: Install Neovim
+      when: ansible_distribution in ["Archlinux"]
+      pacman:
+        name:
+          - neovim

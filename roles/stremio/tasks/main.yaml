@@ -1,0 +1,6 @@
+- name: Install Stremio
+  become_user: "{{ host_user }}"
+  flatpak:
+    name: com.stremio.Stremio
+    state: present
+    method: user

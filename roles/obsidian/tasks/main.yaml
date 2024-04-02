@@ -1,0 +1,6 @@
+- name: Install Obsidian
+  become_user: "{{ host_user }}"
+  flatpak:
+    name: md.obsidian.Obsidian
+    state: present
+    method: user
