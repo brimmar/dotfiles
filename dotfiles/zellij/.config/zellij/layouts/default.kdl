@@ -27,6 +27,7 @@ layout {
 			datetime "#[fg=#9399B2,bold]▎󰃭 {format} "
 			datetime_format "%A, %d %b %Y 󰥔 %H:%M"
 			datetime_timezone "America/Sao_Paulo"
+			datetime_locale "pt_BR"
 		}
 	}
 	pane
