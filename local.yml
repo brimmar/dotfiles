@@ -50,6 +50,7 @@
     - { role: flatpak, tags: flatpak }
     - { role: fonts, tags: fonts }
     - { role: gnome_tweaks, tags: gnome_tweaks }
+    - { role: go, tags: go }
     - { role: lutris, tags: lutris }
     - { role: musikcube, tags: musikcube }
     - { role: neovim, tags: neovim }

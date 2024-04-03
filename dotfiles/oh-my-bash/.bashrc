@@ -186,4 +186,5 @@ source ~/.bash_completion/alacritty
 # bun
 export BUN_INSTALL="$HOME/.bun"
 export PATH=$BUN_INSTALL/bin:$PATH
+export PATH=$PATH:/usr/local/go/bin
 eval "$(zellij setup --generate-auto-start bash)"
