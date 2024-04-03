@@ -1,0 +1,5 @@
+dependencies:
+  - role: vi
+  - role: node
+  - role: python
+  - role: rust

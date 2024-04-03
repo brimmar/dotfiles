@@ -1,0 +1,30 @@
+- name: Install Bat
+  block:
+    - name: Install Bat
+      when: ansible_distribution in ["Debian", "Ubuntu", "Pop!_OS"]
+      block:
+        - name: Install package
+          apt:
+            name:
+              - bat
+
+        - name: Create Symbolic Link for Bat command
+          become_user: "{{ host_user }}"
+          block:
+            - name: Ensure Local Bin Directory Exists
+              file:
+                path: "/home/{{ host_user }}/.local/bin/"
+                state: directory
+                mode: 0755
+            - name: Make Symbolic Link
+              file:
+                src: /usr/bin/batcat
+                dest: "/home/{{ host_user }}/.local/bin/bat"
+                state: link
+                mode: 0755
+
+    - name: Install Bat
+      when: ansible_distribution in ["Archlinux"]
+      pacman:
+        name:
+          - bat

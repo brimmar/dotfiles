@@ -1,0 +1,12 @@
+- name: Install Node
+  become_user: "{{ host_user }}"
+  block:
+    - name: Check for Node Presence
+      stat:
+        path: "/home/{{ host_user }}/.nvm/versions/node/"
+      register: node_status
+
+    - name: Install Node
+      when: node_status.stat.exists == false
+      shell:
+        cmd: '{{ mg_user_shell.command + '' "nvm install node"'' }}'

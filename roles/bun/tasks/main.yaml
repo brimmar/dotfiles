@@ -1,0 +1,20 @@
+- name: Install Bun
+  become_user: "{{ host_user }}"
+  block:
+    - name: Download Bun
+      block:
+        - name: Ensure Bun Directory Exists
+          file:
+            path: "/home/{{ host_user }}/bun/"
+            state: directory
+            mode: 0755
+        - name: Download Bun
+          get_url:
+            url: https://bun.sh/install
+            dest: "/home/{{ host_user }}/bun/install.sh"
+            mode: 0755
+          register: download_bun_result
+
+    - name: Install Bun
+      when: download_bun_result.changed
+      command: "/home/{{ host_user }}/bun/install.sh"

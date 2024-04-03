@@ -3,7 +3,14 @@
   become: true
 
   pre_tasks:
-    - name: Ubuntu based Pre Tasks
+    - name: Stop Bluetooth Service
+      when: ansible_distribution in ["Debian", "Ubuntu", "Pop!_OS"]
+      service:
+        name: bluetooth.service
+        state: stopped
+        enabled: no
+
+    - name: Ubuntu Pre-Tasks
       when: ansible_distribution in ["Debian", "Ubuntu", "Pop!_OS"]
       block:
         - name: Update Repositories
@@ -16,46 +23,10 @@
             name: software-properties-common
             state: present
 
-        - name: Add Docker Repository
-          block:
-            - name: Add Docker Keyring
-              apt_key:
-                url: https://download.docker.com/linux/ubuntu/gpg
-                state: present
-
-            - name: Add Docker Repository
-              apt_repository:
-                repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable
-                state: present
-
-        - name: Add Brave Browser Repository
-          block:
-            - name: Add Brave Keyring
-              apt_key:
-                url: https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg
-                state: present
-
-            - name: Add Brave Repository
-              apt_repository:
-                repo: deb [arch=amd64] https://brave-browser-apt-release.s3.brave.com/ stable main
-                state: present
-
-        - name: Add Syncthing Repository
-          block:
-            - name: Add Syncthing keyring
-              apt_key:
-                url: https://syncthing.net/release-key.txt
-                state: present
-
-            - name: Add Syncthing Repository
-              apt_repository:
-                repo: deb https://apt.syncthing.net/ syncthing stable
-                state: present
-
     - name: Arch Pre-Tasks
       when: ansible_distribution in ["Archlinux"]
       block:
-        - name: Update Repositories (Arch)
+        - name: Update Repositories
           pacman:
             update_cache: yes
           changed_when: False
@@ -65,21 +36,42 @@
             name: base-devel
             state: present
 
-        - name: Install crontab
-          pacman:
-            name: cronie
-            state: present
-
-        - name: Install VI
-          pacman:
-            name: vi
-            state: present
-
   roles:
-    - users
-    - cron
-    - base
-    - languages
-    - packages
-    - programs
-    - config
+    - { role: disable_locks, tags: disable_locks }
+    - { role: alacritty, tags: alacritty }
+    - { role: bat, tags: bat }
+    - { role: brave, tags: brave }
+    - { role: bruno, tags: bruno }
+    - { role: bun, tags: bun }
+    - { role: cron, tags: cron }
+    - { role: delta, tags: delta }
+    - { role: discord, tags: discord }
+    - { role: docker, tags: docker }
+    - { role: flatpak, tags: flatpak }
+    - { role: fonts, tags: fonts }
+    - { role: gnome_tweaks, tags: gnome_tweaks }
+    - { role: lutris, tags: lutris }
+    - { role: musikcube, tags: musikcube }
+    - { role: neovim, tags: neovim }
+    - { role: node, tags: node }
+    - { role: nvm, tags: nvm }
+    - { role: obsidian, tags: obsidian }
+    - { role: oh_my_bash, tags: oh_my_bash }
+    - { role: packages, tags: packages }
+    - { role: paru, tags: paru }
+    - { role: psutil, tags: psutil }
+    - { role: python, tags: python }
+    - { role: rust, tags: rust }
+    - { role: rustup, tags: rustup }
+    - { role: ssh, tags: ssh }
+    - { role: stremio, tags: stremio }
+    - { role: syncthing, tags: syncthing }
+    - { role: telegram, tags: telegram }
+    - { role: test_shell, tags: test_shell }
+    - { role: users, tags: users }
+    - { role: vi, tags: vi }
+    - { role: vlc, tags: vlc }
+    - { role: whatsapp, tags: whatsapp }
+    - { role: zellij, tags: zellij }
+    - { role: zjstatus, tags: zjstatus }
+    - { role: dotfiles, tags: dotfiles }

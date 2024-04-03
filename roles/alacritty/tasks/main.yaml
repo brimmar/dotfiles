@@ -1,0 +1,121 @@
+- name: Install Alacritty
+  block:
+    - name: Install dependencies
+      block:
+        - name: Install dependencies
+          when: ansible_distribution in ["Debian", "Ubuntu", "Pop!_OS"]
+          apt:
+            name:
+              - pkg-config
+              - libfreetype6-dev
+              - libfontconfig1-dev
+              - libxcb-xfixes0-dev
+              - libxkbcommon-dev
+              - cmake
+              - make
+
+        - name: Install dependencies
+          when: ansible_distribution in ["Archlinux"]
+          pacman:
+            name:
+              - pkg-config
+              - freetype2
+              - fontconfig
+              - libxcb
+              - libxkbcommon
+              - cmake
+              - make
+              - bash-completion
+
+    - name: Install Alacritty
+      block:
+        - name: Create Config Dir of Alacritty
+          become_user: "{{ host_user }}"
+          file:
+            path: "/home/{{ host_user }}/.config/alacritty/"
+            state: directory
+            mode: 0755
+
+        - name: Download Alacritty
+          become_user: "{{ host_user }}"
+          git:
+            dest: "/home/{{ host_user }}/alacritty/"
+            recursive: no
+            repo: "https://github.com/alacritty/alacritty.git"
+          register: download_alacritty_result
+
+        - name: Install Alacritty
+          when: download_alacritty_result.changed
+          become_user: "{{ host_user }}"
+          command:
+            chdir: "/home/{{ host_user }}/alacritty/"
+            cmd: "/home/{{ host_user }}/.cargo/bin/cargo build --release"
+
+        - name: Install Alacritty Terminfo
+          when: download_alacritty_result.changed
+          command:
+            chdir: "/home/{{ host_user }}/alacritty/"
+            cmd: "tic -xe alacritty,alacritty-direct extra/alacritty.info"
+
+        - name: Copy alacritty to bin
+          when: download_alacritty_result.changed
+          copy:
+            src: "/home/{{ host_user }}/alacritty/target/release/alacritty"
+            dest: /usr/local/bin
+            mode: 0755
+
+        - name: Copy Alacritty Logo
+          when: download_alacritty_result.changed
+          copy:
+            src: "/home/{{ host_user }}/alacritty/extra/logo/alacritty-term.svg"
+            dest: /usr/share/pixmaps/Alacritty.svg
+            mode: 0755
+
+        - name: Desktop File Install Alacritty
+          when: download_alacritty_result.changed
+          command:
+            chdir: "/home/{{ host_user }}/alacritty/"
+            cmd: desktop-file-install extra/linux/Alacritty.desktop
+
+        - name: Update Desktop
+          when: download_alacritty_result.changed
+          command: update-desktop-database
+
+        - name: Ensure Man Page Exists
+          when: download_alacritty_result.changed
+          file:
+            path: /usr/local/share/man/man1
+            state: directory
+
+        - name: Copy man page of alacritty
+          when: download_alacritty_result.changed
+          shell:
+            chdir: "/home/{{ host_user }}/alacritty/"
+            cmd: "gzip -c extra/alacritty.man | tee /usr/local/share/man/man1/alacritty.1.gz > /dev/null"
+
+        - name: Copy the message of the man page of alacritty
+          when: download_alacritty_result.changed
+          shell:
+            chdir: "/home/{{ host_user }}/alacritty/"
+            cmd: "gzip -c extra/alacritty-msg.man | tee /usr/local/share/man/man1/alacritty-msg.1.gz > /dev/null"
+
+        - name: Ensure bash completion exists
+          when: download_alacritty_result.changed
+          become_user: "{{ host_user }}"
+          file:
+            path: "/home/{{ host_user }}/.bash_completion"
+            state: directory
+            mode: 0755
+
+        - name: Copy bash completion of alacritty
+          when: download_alacritty_result.changed
+          become_user: "{{ host_user }}"
+          copy:
+            src: "/home/{{ host_user }}/alacritty/extra/completions/alacritty.bash"
+            dest: "/home/{{ host_user }}/.bash_completion/alacritty"
+            mode: 0755
+
+        - name: Append alacritty source to bashrc
+          when: download_alacritty_result.changed
+          become_user: "{{ host_user }}"
+          shell: 'echo "source ~/.bash_completion/alacritty" >> ~/.bashrc'

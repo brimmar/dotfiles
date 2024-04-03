@@ -1,0 +1,3 @@
+- name: Install Delta
+  become_user: "{{ host_user }}"
+  command: "/home/{{ host_user }}/.cargo/bin/cargo install git-delta"

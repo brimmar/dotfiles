@@ -1,0 +1,6 @@
+- name: Install Lutris
+  become_user: "{{ host_user }}"
+  flatpak:
+    name: net.lutris.Lutris
+    state: present
+    method: user
