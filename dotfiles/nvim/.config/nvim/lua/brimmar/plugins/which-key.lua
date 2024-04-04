@@ -78,8 +78,6 @@ return {
 		}
 		local mappings = {
 			[";"] = { "<cmd>Alpha<CR>", "Dashboard" },
-			["w"] = { "<cmd>w!<CR>", "Save" },
-			["q"] = { "<cmd>confirm q<CR>", "Quit" },
 			["/"] = { "<Plug>(comment_toggle_linewise_current)", "Comment toggle current line" },
 			["c"] = { "<cmd>BufferKill<CR>", "Close Buffer" },
 			["f"] = {
@@ -173,6 +171,13 @@ return {
 					"<cmd>lua require('telescope.builtin').colorscheme({enable_preview = true})<cr>",
 					"Colorscheme with Preview",
 				},
+			},
+			w = {
+				name = "Window",
+				v = { "<C-w>v", "Split window vertically" },
+				h = { "<C-w>s", "Split window horizontally" },
+				e = { "<C-w>=", "Make splits equal size" },
+				x = { "<cmd>close<CR>", "Close current split" },
 			},
 			T = {
 				name = "Treesitter",

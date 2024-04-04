@@ -99,13 +99,6 @@ return {
 				ignore = false,
 			},
 		})
-
-		local keymap = vim.keymap
-
-		keymap.set("n", "<leader>ee", "<cmd>NvimTreeToggle<CR>") -- Toggle NvimTree
-		keymap.set("n", "<leader>ef", "<cmd>NvimTreeFindFileToggle<CR>") -- Opens NvimTree on the current file
-		keymap.set("n", "<leader>ec", "<cmd>NvimTreeCollapse<CR>") -- Close all NvimTree Tabs
-		keymap.set("n", "<leader>er", "<cmd>NvimTreeRefresh<CR>") -- Reloads NvimTree
 	end,
 	cmd = { "NvimTreeToggle", "NvimTreeOpen", "NvimTreeFocus", "NvimTreeFindFileToggle" },
 }
