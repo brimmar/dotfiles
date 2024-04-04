@@ -163,7 +163,11 @@ return {
 				M = { "<cmd>Telescope man_pages<cr>", "Man Pages" },
 				r = { "<cmd>Telescope oldfiles<cr>", "Open Recent File" },
 				R = { "<cmd>Telescope register<cr>", "Registers" },
-				t = { "<cmd>Telescope live_grep<cr>", "Text" },
+				t = {
+					name = "Text or Todos",
+					t = { "<cmd>Telescope live_grep<cr>", "Text" },
+					o = { "<cmd>TodoTelescope<cr>", "Find TODOS" },
+				},
 				k = { "<cmd>Telescope keymaps<cr>", "Keymaps" },
 				C = { "<cmd>Telescope commands<cr>", "Commands" },
 				l = { "<cmd>Telescope resume<cr>", "Resume last search" },
@@ -171,6 +175,7 @@ return {
 					"<cmd>lua require('telescope.builtin').colorscheme({enable_preview = true})<cr>",
 					"Colorscheme with Preview",
 				},
+				u = { "<cmd>Telescope undo<cr>", "Show the undo tree" },
 			},
 			w = {
 				name = "Window",
