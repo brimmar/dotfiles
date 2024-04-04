@@ -4,10 +4,12 @@ return {
 	dependencies = {
 		"hrsh7th/cmp-nvim-lsp",
 		{ "antosha417/nvim-lsp-file-operations", config = true },
+		{ "folke/neodev.nvim", opts = {} },
 	},
 	config = function()
 		local lspconfig = require("lspconfig")
 		local cmp_nvim_lsp = require("cmp_nvim_lsp")
+		local mason_lspconfig = require("mason-lspconfig")
 
 		local keymap = vim.keymap
 
@@ -63,128 +65,64 @@ return {
 			vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = "" })
 		end
 
-		lspconfig["tsserver"].setup({
-			capabilities = capabilities,
-			on_attach = on_attach,
-		})
+		mason_lspconfig.setup_handlers({
+			function(server_name)
+				lspconfig[server_name].setup({
+					capabilities = capabilities,
+					on_attach = on_attach,
+				})
+			end,
+			["svelte"] = function()
+				lspconfig["svelte"].setup({
+					capabilities = capabilities,
+					on_attach = function(client, bufnr)
+						on_attach(client, bufnr)
 
-		lspconfig["html"].setup({
-			capabilities = capabilities,
-			on_attach = on_attach,
-		})
-
-		lspconfig["cssls"].setup({
-			capabilities = capabilities,
-			on_attach = on_attach,
-		})
-
-		lspconfig["jsonls"].setup({
-			capabilities = capabilities,
-			on_attach = on_attach,
-		})
-
-		lspconfig["tailwindcss"].setup({
-			capabilities = capabilities,
-			on_attach = on_attach,
-		})
-
-		lspconfig["bashls"].setup({
-			capabilities = capabilities,
-			on_attach = on_attach,
-		})
-
-		lspconfig["svelte"].setup({
-			capabilities = capabilities,
-			on_attach = function(client, bufnr)
-				on_attach(client, bufnr)
-
-				vim.api.nvim_create_autocmd("BufWritePost", {
-					pattern = { "*.js", "*.ts" },
-					callback = function(ctx)
-						if client.name == "svelte" then
-							client.notify("$/onDidChangeTsOrJsFile", { uri = ctx.file })
-						end
+						vim.api.nvim_create_autocmd("BufWritePost", {
+							pattern = { "*.js", "*.ts" },
+							callback = function(ctx)
+								client.notify("$/onDidChangeTsOrJsFile", { uri = ctx.match })
+							end,
+						})
 					end,
 				})
 			end,
-		})
-
-		lspconfig["lua_ls"].setup({
-			capabilities = capabilities,
-			on_attach = on_attach,
-			settings = {
-				Lua = {
-					diagnostics = {
-						globals = { "vim" },
-					},
-					workspace = {
-						library = {
-							[vim.fn.expand("$VIMRUNTIME/lua")] = true,
-							[vim.fn.stdpath("config") .. "/lua"] = true,
+			["lua_ls"] = function()
+				lspconfig["lua_ls"].setup({
+					capabilities = capabilities,
+					on_attach = on_attach,
+					settings = {
+						Lua = {
+							diagnostics = {
+								globals = { "vim" },
+							},
+							workspace = {
+								library = {
+									[vim.fn.expand("$VIMRUNTIME/lua")] = true,
+									[vim.fn.stdpath("config") .. "/lua"] = true,
+								},
+							},
 						},
 					},
-				},
-			},
-		})
-
-		lspconfig["emmet_ls"].setup({
-			capabilities = capabilities,
-			on_attach = on_attach,
-			filetypes = { "html", "css", "sass", "scss", "less", "svelte" },
-		})
-
-		lspconfig["dockerls"].setup({
-			capabilities = capabilities,
-			on_attach = on_attach,
-		})
-
-		lspconfig["yamlls"].setup({
-			capabilities = capabilities,
-			on_attach = on_attach,
-		})
-
-		lspconfig["intelephense"].setup({
-			capabilities = capabilities,
-			on_attach = on_attach,
-			filetypes = { "php" },
-			root_dir = function(fname)
-				return vim.loop.cwd()
+				})
 			end,
-		})
-
-		lspconfig.rust_analyzer.setup({
-			capabilities = capabilities,
-			on_attach = on_attach,
-		})
-
-		lspconfig["ansiblels"].setup({
-			capabilities = capabilities,
-			on_attach = on_attach,
-		})
-
-		lspconfig["astro"].setup({
-			capabilities = capabilities,
-			on_attach = on_attach,
-		})
-
-		lspconfig["elixirls"].setup({
-			capabilities = capabilities,
-			on_attach = on_attach,
-		})
-
-		lspconfig["volar"].setup({
-			capabilities = capabilities,
-			on_attach = on_attach,
-		})
-
-		lspconfig["r_language_server"].setup({
-			capabilities = capabilities,
-			on_attach = on_attach,
-		})
-
-		lspconfig["gopls"].setup({
-			capabilities = capabilities,
-			on_attach = on_attach,
+			["emmet_ls"] = function()
+				lspconfig["emmet_ls"].setup({
+					capabilities = capabilities,
+					on_attach = on_attach,
+					filetypes = { "html", "css", "sass", "scss", "less", "svelte" },
+				})
+			end,
+			["intelephense"] = function()
+				lspconfig["intelephense"].setup({
+					capabilities = capabilities,
+					on_attach = on_attach,
+					filetypes = { "php" },
+					root_dir = function(fname)
+						return vim.loop.cwd()
+					end,
+				})
+			end,
 		})
 	end,
 }

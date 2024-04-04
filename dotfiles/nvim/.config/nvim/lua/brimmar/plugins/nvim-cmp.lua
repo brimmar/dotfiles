@@ -11,8 +11,6 @@ return {
 		local cmp = require("cmp")
 		local luasnip = require("luasnip")
 
-		-- TODO: Alterar isso aqui pra ser totalmente genérico e funcionar independente de onde ou qual usuário for o neovim
-		-- Isso é necessário pra quando eu for passar o neovim pro docker
 		require("luasnip.loaders.from_lua").load({ paths = "~/.config/nvim/lua/brimmar/plugins/snippets/" })
 
 		local types = require("luasnip.util.types")

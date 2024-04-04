@@ -14,18 +14,6 @@ local keymap = vim.keymap
 
 keymap.set(
 	mode_adapters.normal_mode,
-	"<leader>sv",
-	"<C-w>v",
-	{ desc = "Split window vertically", noremap = true, silent = true }
-) -- split window vertically
-keymap.set(
-	mode_adapters.normal_mode,
-	"<leader>sh",
-	"<C-w>s",
-	{ desc = "Split window horizontally", noremap = true, silent = true }
-) -- split window horizontally
-keymap.set(
-	mode_adapters.normal_mode,
 	"<C-h>",
 	"<C-w>h",
 	{ desc = "Move left one window", noremap = true, silent = true }
@@ -64,5 +52,5 @@ keymap.set(
 ) -- resize the window
 keymap.set(mode_adapters.visual_mode, "<", "<gv", { desc = "Indent Line to the right", noremap = true, silent = true }) -- better indenting
 keymap.set(mode_adapters.visual_mode, ">", ">gv", { desc = "Indent Line to the left", noremap = true, silent = true }) -- better indenting
-keymap.set(mode_adapters.visual_block_mode, "<A-j>", ":m '>+1<CR>gv=gv", { noremap = true, silent = true })
-keymap.set(mode_adapters.visual_block_mode, "<A-k>", ":m '<-2<CR>gv=gv", { noremap = true, silent = true })
+keymap.set(mode_adapters.visual_block_mode, "<A-j>", ":m '>+1<CR>gv=gv", { noremap = true, silent = true }) -- drag the code block up
+keymap.set(mode_adapters.visual_block_mode, "<A-k>", ":m '<-2<CR>gv=gv", { noremap = true, silent = true }) -- drag the code block down
