@@ -26,11 +26,10 @@ keybinds clear-defaults=true {
         bind "Right" { MoveFocus "Right"; }
         bind "Down" { MoveFocus "Down"; }
         bind "Up" { MoveFocus "Up"; }
-        bind { SwitchFocus; }
         bind "n" { NewPane; SwitchToMode "Normal"; }
 		bind "d" { NewPane "Down"; SwitchToMode "Normal"; }
         bind "r" { NewPane "Right"; SwitchToMode "Normal"; }
-        bind "x" { CloseFocus; }
+        bind "x" { CloseFocus; SwitchToMode "Normal"; }
         bind "f" { ToggleFocusFullscreen; }
         bind "z" { TogglePaneFrames; SwitchToMode "Normal"; }
         bind "w" { ToggleFloatingPanes; }
