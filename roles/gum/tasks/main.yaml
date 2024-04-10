@@ -1,0 +1,18 @@
+- name: Install Gum
+  block:
+    - name: Install Gum
+      when: ansible_distribution in ["Debian", "Ubuntu", "Pop!_OS"]
+      block:
+        - name: Download Gum Binary
+          become_user: "{{ host_user }}"
+          apt:
+            deb: https://github.com/charmbracelet/gum/releases/download/v0.13.0/gum_0.13.0_amd64.deb
+            state: present
+
+    - name: Install Gum
+      when: ansible_distribution in ["Archlinux"]
+      block:
+        - name: Install Gum
+          pacman:
+            name: gum
+            state: present
