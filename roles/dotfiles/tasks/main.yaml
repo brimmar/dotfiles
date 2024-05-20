@@ -12,7 +12,7 @@
     - name: Git Sparse Checkout
       shell:
         chdir: "/home/{{ host_user }}/dotfiles/"
-        cmd: git sparse-checkout set --no-cone dotfiles
+        cmd: git sparse-checkout set --no-cone /dotfiles
     - name: Git Checkout
       shell:
         chdir: "/home/{{ host_user }}/dotfiles/"
