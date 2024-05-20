@@ -19,7 +19,7 @@ If you are interested on just the dotfiles, you can do this:
 ```bash
 git clone -n --depth=1 --filter=tree:0 https://github.com/brimmar/dotfiles.git
 cd dotfiles
-git sparse-checkout set --no-cone dotfiles
+git sparse-checkout set --no-cone /dotfiles
 git checkout
 ```
 
