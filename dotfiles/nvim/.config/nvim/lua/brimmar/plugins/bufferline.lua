@@ -67,7 +67,9 @@ return {
 					else
 						return
 					end
-				elseif api.nvim_buf_get_option(bufnr, "buftype") == "terminal" then
+				elseif api.nvim_get_option_value("buftype", {
+					scope = "local",
+				}) == "terminal" then
 					choice = fn.confirm(fmt([[Close "%s"?]], bufname), "&Yes\n&No\n&Cancel")
 					if choice == 1 then
 						force = true
