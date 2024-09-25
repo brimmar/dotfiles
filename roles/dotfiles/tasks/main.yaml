@@ -18,10 +18,10 @@
           command:
             chdir: "/home/{{ host_user }}"
             cmd: git clone -n --depth=1 --filter=tree:0 https://github.com/brimmar/dotfiles.git
-            register: git_clone
-            until: git_clone is success
-            retries: 3
-            delay: 5
+          register: git_clone
+          until: git_clone is success
+          retries: 3
+          delay: 5
 
         - name: Git Sparse Checkout
           shell:
@@ -116,7 +116,7 @@
     - name: Display error message
       debug:
         msg: "Dotfiles setup failed. Please check the logs for more details."
-    
+
     - name: Attempt to remove incomplete dotfiles setup
       file:
         path: "/home/{{ host_user }}/dotfiles"
