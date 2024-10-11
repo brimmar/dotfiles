@@ -1,56 +1,39 @@
-local mode_adapters = {
-	insert_mode = "i",
-	normal_mode = "n",
-	term_mode = "t",
-	visual_mode = "v",
-	visual_block_mode = "x",
-	command_mode = "c",
-	operator_pending_mode = "o",
+local modes = {
+	insert = "i",
+	normal = "n",
+	term = "t",
+	visual = "v",
+	visual_block = "x",
+	command = "c",
+	operator_pending = "o",
 }
 
 vim.g.mapleader = " "
 
-local keymap = vim.keymap
+local function map(mode, lhs, rhs, opts)
+	local options = { noremap = true, silent = true }
+	if opts then
+		options = vim.tbl_extend("force", options, opts)
+	end
+	vim.api.nvim_set_keymap(mode, lhs, rhs, options)
+end
 
-keymap.set(
-	mode_adapters.normal_mode,
-	"<C-h>",
-	"<C-w>h",
-	{ desc = "Move left one window", noremap = true, silent = true }
-) -- move left one window
-keymap.set(
-	mode_adapters.normal_mode,
-	"<C-j>",
-	"<C-w>j",
-	{ desc = "Move down one window", noremap = true, silent = true }
-) -- move down one window
-keymap.set(mode_adapters.normal_mode, "<C-k>", "<C-w>k", { desc = "Move up one window", noremap = true, silent = true }) -- move up one window
-keymap.set(mode_adapters.normal_mode, "<C-l>", "<C-w>l", { desc = "Move up one window", noremap = true, silent = true }) -- move up one window
-keymap.set(
-	mode_adapters.normal_mode,
-	"<C-Up>",
-	":resize -2<CR>",
-	{ desc = "Resize the current window", noremap = true, silent = true }
-) -- resize the window
-keymap.set(
-	mode_adapters.normal_mode,
-	"<C-Down>",
-	":resize +2<CR>",
-	{ desc = "Resize the current window", noremap = true, silent = true }
-) -- resize the window
-keymap.set(
-	mode_adapters.normal_mode,
-	"<C-Left>",
-	":vertical resize -2<CR>",
-	{ desc = "Resize the current window", noremap = true, silent = true }
-) -- resize the window
-keymap.set(
-	mode_adapters.normal_mode,
-	"<C-Right>",
-	":vertical resize +2<CR>",
-	{ desc = "Resize the current window", noremap = true, silent = true }
-) -- resize the window
-keymap.set(mode_adapters.visual_mode, "<", "<gv", { desc = "Indent Line to the right", noremap = true, silent = true }) -- better indenting
-keymap.set(mode_adapters.visual_mode, ">", ">gv", { desc = "Indent Line to the left", noremap = true, silent = true }) -- better indenting
-keymap.set(mode_adapters.visual_block_mode, "<A-j>", ":m '>+1<CR>gv=gv", { noremap = true, silent = true }) -- drag the code block up
-keymap.set(mode_adapters.visual_block_mode, "<A-k>", ":m '<-2<CR>gv=gv", { noremap = true, silent = true }) -- drag the code block down
+-- Window navigation
+map(modes.normal, "<C-h>", "<C-w>h", { desc = "Move left one window" })
+map(modes.normal, "<C-j>", "<C-w>j", { desc = "Move down one window" })
+map(modes.normal, "<C-k>", "<C-w>k", { desc = "Move up one window" })
+map(modes.normal, "<C-l>", "<C-w>l", { desc = "Move right one window" })
+
+-- Window resizing
+map(modes.normal, "<C-Up>", ":resize -2<CR>", { desc = "Resize window up" })
+map(modes.normal, "<C-Down>", ":resize +2<CR>", { desc = "Resize window down" })
+map(modes.normal, "<C-Left>", ":vertical resize -2<CR>", { desc = "Resize window left" })
+map(modes.normal, "<C-Right>", ":vertical resize +2<CR>", { desc = "Resize window right" })
+
+-- Indenting
+map(modes.visual, "<", "<gv", { desc = "Indent line to the left" })
+map(modes.visual, ">", ">gv", { desc = "Indent line to the right" })
+
+-- Moving code blocks
+map(modes.visual_block, "<A-j>", ":m '>+1<CR>gv=gv", { desc = "Move code block down" })
+map(modes.visual_block, "<A-k>", ":m '<-2<CR>gv=gv", { desc = "Move code block up" })

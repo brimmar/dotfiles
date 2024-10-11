@@ -33,17 +33,18 @@ return {
 						["<C-t>"] = trouble_telescope.open,
 					},
 				},
+				file_ignore_patterns = {
+					"node_modules",
+					"vendor",
+					".git",
+					"%.jpg",
+					"%.png",
+				},
 			},
 		})
 
 		telescope.load_extension("fzf")
 		telescope.load_extension("undo")
 		telescope.load_extension("harpoon")
-
-		-- set keymaps
-		local keymap = vim.keymap
-
-		keymap.set("n", "<leader>u", "<cmd>Telescope undo<cr>", { desc = "Show the undo tree" })
-		keymap.set("n", "<leader>ft", "<cmd>TodoTelescope<cr>", { desc = "Find TODOS" })
 	end,
 }

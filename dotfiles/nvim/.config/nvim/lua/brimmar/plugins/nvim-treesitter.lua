@@ -61,6 +61,7 @@ return {
 				"php",
 				"phpdoc",
 				"php_only",
+				"blade",
 			},
 
 			auto_install = false,

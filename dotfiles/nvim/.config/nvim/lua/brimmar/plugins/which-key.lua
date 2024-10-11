@@ -153,11 +153,15 @@ return {
 				S = { "<cmd>Telescope lsp_dynamic_workspace_symbols<cr>", "Workspace Symbols" },
 				e = { "<cmd>Telescope quickfix<cr>", "Telescope Quickfix" },
 			},
+			m = {
+				name = "Formatter",
+				p = "Format file",
+			},
 			s = {
 				name = "Search",
 				b = { "<cmd>Telescope git_branches<cr>", "Checkout branch" },
 				c = { "<cmd>Telescope colorscheme<cr>", "Colorscheme" },
-				f = { "<cmd>Telescope find_files<cr>", "Find File" },
+				f = { "<cmd>lua require('telescope.builtin').find_files({hidden=true})<cr>", "Find File" },
 				h = { "<cmd>Telescope help_tags<cr>", "Find Help" },
 				H = { "<cmd>Telescope highlights<cr>", "Find highlight groups" },
 				M = { "<cmd>Telescope man_pages<cr>", "Man Pages" },
@@ -194,6 +198,10 @@ return {
 			l = {
 				name = "LSP",
 				a = { "<cmd>lua vim.lsp.buf.code_action()<cr>", "Code Action" },
+			},
+			m = {
+				name = "Formatter",
+				p = "Format range",
 			},
 		}
 
