@@ -45,6 +45,5 @@ return {
 
 		telescope.load_extension("fzf")
 		telescope.load_extension("undo")
-		telescope.load_extension("harpoon")
 	end,
 }
