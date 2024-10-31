@@ -5,7 +5,3 @@
       apt:
         deb: https://github.com/clangen/musikcube/releases/download/3.0.2/musikcube_3.0.2_linux_x86_64.deb
         state: present
-    - name: Install Musikcube using paru
-      become_user: "ansible"
-      when: ansible_distribution in ["Archlinux"]
-      command: paru -S --noconfirm --needed musikcube

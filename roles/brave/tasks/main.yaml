@@ -19,8 +19,3 @@
           apt:
             name:
               - brave-browser
-
-    - name: Install Brave
-      when: ansible_distribution in ["Archlinux"]
-      become_user: "ansible"
-      command: paru -S --noconfirm --needed brave-bin

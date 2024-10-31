@@ -7,11 +7,3 @@
           apt:
             deb: https://github.com/charmbracelet/gum/releases/download/v0.13.0/gum_0.13.0_amd64.deb
             state: present
-
-    - name: Install Gum
-      when: ansible_distribution in ["Archlinux"]
-      block:
-        - name: Install Gum
-          pacman:
-            name: gum
-            state: present

@@ -36,12 +36,6 @@
             name:
               - docker-ce
           register: download_docker_status
-        - name: Download Docker for Arch-based systems
-          when: ansible_distribution in ["Archlinux"]
-          pacman:
-            name:
-              - docker
-          register: download_docker_status
       rescue:
         - name: Log Docker download failure
           lineinfile:
@@ -51,17 +45,6 @@
         - name: Fail with overall error message
           fail:
             msg: "Failed to install Docker. Please check the package manager and try again."
-
-    - name: Start Docker Service
-      when: ansible_distribution in ["Archlinux"]
-      service:
-        name: "docker"
-        enabled: yes
-        state: started
-      register: docker_service
-      retries: 3
-      delay: 10
-      until: docker_service is success
 
     - name: Add Docker User
       when: download_docker_status.changed

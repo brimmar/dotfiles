@@ -19,17 +19,6 @@
               - vim
             state: present
 
-        - name: Install dependencies
-          when: ansible_distribution in ["Archlinux"]
-          pacman:
-            name:
-              - ripgrep
-              - fd
-              - fzf
-              - xclip
-              - vim
-              - unzip
-            state: present
       rescue:
         - name: Log dependency installation failure
           lineinfile:
@@ -106,16 +95,6 @@
               lineinfile:
                 path: "{{ log_file }}"
                 line: "{{ ansible_date_time.iso8601 }} - Failed to install Neovim. Please try again."
-
-    - name: Install Neovim
-      when: ansible_distribution in ["Archlinux"]
-      pacman:
-        name:
-          - neovim
-      register: arch_neovim
-      until: arch_neovim is success
-      retries: 3
-      delay: 5
 
     - name: Log Neovim installation success
       lineinfile:

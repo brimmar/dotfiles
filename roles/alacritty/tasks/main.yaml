@@ -14,19 +14,6 @@
               - cmake
               - make
 
-        - name: Install dependencies
-          when: ansible_distribution in ["Archlinux"]
-          pacman:
-            name:
-              - pkg-config
-              - freetype2
-              - fontconfig
-              - libxcb
-              - libxkbcommon
-              - cmake
-              - make
-              - bash-completion
-
     - name: Install Alacritty
       block:
         - name: Create Config Dir of Alacritty

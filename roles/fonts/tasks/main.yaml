@@ -1,10 +1,5 @@
 - name: Install Fonts
   block:
-    - name: Install Google Fonts
-      when: ansible_distribution in ["Archlinux"]
-      become_user: "ansible"
-      command: paru -S --noconfirm --needed ttf-google-fonts-git
-
     - name: Install Nerd Fonts
       become_user: "{{ host_user }}"
       block:

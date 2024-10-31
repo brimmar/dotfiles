@@ -27,7 +27,7 @@ And then stow or symlink it yourself!
 
 ## Supported Systems
 
-At the moment, this Ansible configuration is tailored specifically for Pop!\_OS. However, I plan to extend support to other Linux distributions like Arch Linux and Ubuntu in the near future.
+At the moment, this Ansible configuration is tailored specifically for Pop!\_OS.
 
 ## Important Notes
 

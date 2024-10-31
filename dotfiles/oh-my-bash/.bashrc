@@ -189,22 +189,16 @@ source ~/.bash_completion/alacritty
 # bun
 export BUN_INSTALL="$HOME/.bun"
 export PATH=$BUN_INSTALL/bin:$PATH
-export PATH=$PATH:/usr/local/go/bin
-export PATH=$PATH:/usr/bin/flutter/bin
-eval "$(zellij setup --generate-auto-start bash)"
-CAT=$(gum style --foreground 212 "
-\    /\ 
- )  ( ')
-(  /  ) 
- \(__)| 
-")
-SPEECH=$(gum style --foreground 255 --border-foreground 255 --border rounded --padding "0 1" "Bom di... Miau?")
-BUBBLE=$(gum style --foreground 255 "𑗂")
-SPEECH_BUBBLE_LAYOUT=$(gum join --align center "$BUBBLE" "$SPEECH")
-SPEECH_BUBBLE=$(gum style --margin "0 2" --padding "2 0" "$SPEECH_BUBBLE_LAYOUT")
-SPEECH_BUBBLE_CAT=$(gum join --align center "$CAT" "$SPEECH_BUBBLE")
 
-gum style --align center --width 40 --margin "1 2" "$SPEECH_BUBBLE_CAT"
+# go
+export PATH=$PATH:/usr/local/go/bin
+
+# flutter
+export PATH=$PATH:/usr/bin/flutter/bin
+
+# zellij auto-start
+eval "$(zellij setup --generate-auto-start bash)"
+
 #
 # Installation:
 #

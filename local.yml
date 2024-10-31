@@ -53,18 +53,6 @@
             update_cache: yes
           changed_when: False
           when: ansible_distribution in ["Debian", "Ubuntu", "Pop!_OS"]
-
-        - name: Update pacman cache
-          pacman:
-            update_cache: yes
-          changed_when: False
-          when: ansible_distribution in ["Archlinux"]
-
-        - name: Install Base Devel
-          pacman:
-            name: base-devel
-            state: present
-          when: ansible_distribution in ["Archlinux"]
       rescue:
         - name: Log package cache update failure
           lineinfile:
@@ -85,12 +73,10 @@
     - { role: delta, tags: delta }
     - { role: discord, tags: discord }
     - { role: docker, tags: docker }
-    - { role: flatpak, tags: flatpak }
     - { role: fonts, tags: fonts }
     - { role: gnome_tweaks, tags: gnome_tweaks }
     - { role: go, tags: go }
     - { role: gum, tags: gum }
-    - { role: lutris, tags: lutris }
     - { role: musikcube, tags: musikcube }
     - { role: neovim, tags: neovim }
     - { role: node, tags: node }
@@ -98,7 +84,6 @@
     - { role: obsidian, tags: obsidian }
     - { role: oh_my_bash, tags: oh_my_bash }
     - { role: packages, tags: packages }
-    - { role: paru, tags: paru }
     # - { role: posting, tags: posting }
     - { role: psutil, tags: psutil }
     - { role: python, tags: python }
@@ -111,7 +96,6 @@
     - { role: telegram, tags: telegram }
     - { role: test_shell, tags: test_shell }
     - { role: users, tags: users }
-    - { role: vi, tags: vi }
     - { role: vlc, tags: vlc }
     - { role: whatsapp, tags: whatsapp }
     - { role: zellij, tags: zellij }
