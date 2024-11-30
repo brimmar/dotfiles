@@ -1,5 +1,4 @@
 - name: Install Rust
-  when: download_rustup_result.changed
   become_user: "{{ host_user }}"
   block:
     - name: Run Install script
