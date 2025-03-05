@@ -260,3 +260,4 @@ fi
 ## Generated 2024-06-08 14:32:59.443088Z
 ## By /usr/bin/flutter/bin/cache/flutter_tools.snapshot
 export PATH="$PATH":"$HOME/.pub-cache/bin"
+export PATH="$HOME/zig-linux-x86_64-0.13.0:$PATH"
