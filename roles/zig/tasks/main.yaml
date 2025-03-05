@@ -1,0 +1,73 @@
+- name: Install Zig
+  block:
+    - name: Log Zig installation start
+      lineinfile:
+        path: "{{ log_file }}"
+        line: "{{ ansible_date_time.iso8601 }} - Starting Zig installation"
+      ignore_errors: true
+
+    - name: Download Zig
+      become_user: "{{ host_user }}"
+      block:
+        - name: Ensure Zig Directory Exists
+          file:
+            path: "/home/{{ host_user }}/zig/"
+            state: directory
+            mode: 0755
+
+        - name: Download Zig Binary
+          get_url:
+            url: "https://ziglang.org/download/0.12.0/zig-linux-x86_64-0.12.0.tar.xz"
+            dest: "/home/{{ host_user }}/zig/zig-linux-x86_64-0.12.0.tar.xz"
+            mode: 0755
+          register: download_zig_result
+          until: download_zig_result is success
+          retries: 3
+          delay: 5
+
+    - name: Extract Zig
+      when: download_zig_result.changed
+      unarchive:
+        src: "/home/{{ host_user }}/zig/zig-linux-x86_64-0.12.0.tar.xz"
+        dest: "/home/{{ host_user }}/zig/"
+        remote_src: yes
+        creates: "/home/{{ host_user }}/zig/zig-linux-x86_64-0.12.0/zig"
+        owner: "{{ host_user }}"
+        group: "{{ host_user }}"
+        mode: 0755
+
+    - name: Create Symlink to Zig Binary
+      file:
+        src: "/home/{{ host_user }}/zig/zig-linux-x86_64-0.12.0/zig"
+        dest: "/usr/local/bin/zig"
+        state: link
+        force: yes
+        mode: 0755
+
+    - name: Log Zig installation success
+      lineinfile:
+        path: "{{ log_file }}"
+        line: "{{ ansible_date_time.iso8601 }} - Zig installed successfully"
+      ignore_errors: true
+
+  rescue:
+    - name: Log Zig installation failure
+      lineinfile:
+        path: "{{ log_file }}"
+        line: "{{ ansible_date_time.iso8601 }} - Zig installation failed"
+      ignore_errors: true
+    - name: Fail with overall error message
+      fail:
+        msg: "Zig installation failed. Please check the logs for more details."
+
+  always:
+    - name: Ensure Zig is available in PATH
+      command: which zig
+      register: zig_check
+      ignore_errors: true
+
+    - name: Log Zig availability
+      lineinfile:
+        path: "{{ log_file }}"
+        line: "{{ ansible_date_time.iso8601 }} - Zig availability: {{ 'Available' if zig_check.rc == 0 else 'Not available' }}"
+      ignore_errors: true

@@ -101,6 +101,7 @@
     - { role: zellij, tags: zellij }
     - { role: zjstatus, tags: zjstatus }
     - { role: dotfiles, tags: dotfiles }
+    - { role: zig, tags: zig }
 
   post_tasks:
     - name: Log playbook completion
