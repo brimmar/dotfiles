@@ -24,8 +24,7 @@
       assert:
         that:
           - host_user is defined
-          - ssh_email is defined
-        fail_msg: "Required variables (host_user and/or ssh_email) are not set"
+        fail_msg: "Required variable (host_user) is not set"
       ignore_errors: false
 
     - name: Stop Bluetooth Service
@@ -100,6 +99,8 @@
     - { role: whatsapp, tags: whatsapp }
     - { role: zellij, tags: zellij }
     - { role: zjstatus, tags: zjstatus }
+    - { role: git_config, tags: git_config }
+    - { role: env_vars, tags: env_vars }
     - { role: dotfiles, tags: dotfiles }
     - { role: zig, tags: zig }
 

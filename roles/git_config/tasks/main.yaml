@@ -1,0 +1,16 @@
+- name: Configure Git User Configuration from Vault
+  become_user: "{{ host_user }}"
+  vars:
+    user_git_config_file: "/home/{{ host_user }}/user.gitconfig"
+  block:
+    - name: Create user.gitconfig with vault values in home directory
+      copy:
+        content: |
+          [user]
+              email = {{ vault_git_config.email }}
+              name = {{ vault_git_config.name }}
+              signingkey = {{ vault_git_config.signingkey }}
+        dest: "{{ user_git_config_file }}"
+        owner: "{{ host_user }}"
+        mode: '0644'
+      no_log: true  # Hide sensitive content in logs

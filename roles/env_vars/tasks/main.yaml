@@ -1,0 +1,28 @@
+- name: Configure Environment Variables from Vault
+  become_user: "{{ host_user }}"
+  vars:
+    env_vars_file: "/home/{{ host_user }}/.localrc"
+  block:
+    - name: Create .localrc file with environment variables from vault
+      copy:
+        content: |
+          # Environment variables managed by Ansible Vault
+          {% for key, value in vault_environment_variables.items() %}
+          export {{ key }}="{{ value }}"
+          {% endfor %}
+        dest: "{{ env_vars_file }}"
+        owner: "{{ host_user }}"
+        mode: '0600'
+      no_log: true  # Hide sensitive content in logs
+
+    - name: Ensure .localrc is sourced in .bashrc
+      blockinfile:
+        path: "/home/{{ host_user }}/.bashrc"
+        block: |
+          # Source environment variables
+          if [ -f ~/.localrc ]; then
+              source ~/.localrc
+          fi
+        marker: "# {mark} ANSIBLE MANAGED BLOCK - Environment Variables"
+        create: false
+      become: no

@@ -1,11 +1,27 @@
-- name: Create SSH Key
+- name: Configure SSH Keys from Vault
   become_user: "{{ host_user }}"
+  vars:
+    ssh_dir: "/home/{{ host_user }}/.ssh"
   block:
-    - name: Ensures SSH Key Does not Exists
-      stat:
-        path: "/home/{{ host_user }}/.ssh/id_ed25519"
-      register: ssh_status
-
-    - name: Create SSH Key
-      when: ssh_status.stat.exists == false
-      command: ssh-keygen -t ed25519 -C "{{ ssh_email }}" -q -N "" -f "/home/{{ host_user }}/.ssh/id_ed25519"
+    - name: Ensure SSH directory exists
+      file:
+        path: "{{ ssh_dir }}"
+        state: directory
+        mode: '0700'
+        owner: "{{ host_user }}"
+      
+    - name: Deploy SSH private key from vault
+      copy:
+        content: "{{ vault_ssh_private_key }}"
+        dest: "{{ ssh_dir }}/id_ed25519"
+        mode: '0600'
+        owner: "{{ host_user }}"
+      no_log: true  # Hide the key content in logs
+      
+    - name: Deploy SSH public key from vault
+      copy:
+        content: "{{ vault_ssh_public_key }}"
+        dest: "{{ ssh_dir }}/id_ed25519.pub"
+        mode: '0644'
+        owner: "{{ host_user }}"
+      no_log: true  # Hide the key content in logs

@@ -2,15 +2,35 @@
 
 Welcome to my personal Ansible configuration repository! This project aims to automate the setup of a new PC according to my preferences, including the installation of software, configuration of settings, and deployment of dotfiles.
 
+## Ansible Vault
+
+This setup now uses Ansible Vault to securely manage sensitive information like SSH keys, Git configuration, and environment variables. See `VAULT_SETUP.md` for detailed instructions on setting up and using the vault.
+
 ## Usage
 
-To use this Ansible configuration, simply run the following command on your target machine with Ansible installed:
+To use this Ansible configuration, you have two options:
+
+### Option 1: Using ansible-pull (remote execution)
 
 ```bash
-ansible-pull -K -U https://github.com/brimmar/dotfiles.git -e "host_user=<username>" -e "ssh_email=<email>"
+# If using a vault password file
+ansible-pull -K --vault-password-file ~/.vault_pass -U https://github.com/brimmar/dotfiles.git -e "host_user=<username>"
+
+# Or if you prefer to be prompted for the vault password
+ansible-pull -K --ask-vault-pass -U https://github.com/brimmar/dotfiles.git -e "host_user=<username>"
 ```
 
-Note: You don't need to clone the repository locally; ansible-pull will fetch the configuration directly from the remote repository and apply it to your system.
+### Option 2: Local execution (after cloning)
+
+```bash
+# If using a vault password file
+ansible-playbook local.yml --vault-password-file ~/.vault_pass --extra-vars "host_user=$(whoami)"
+
+# Or if you prefer to be prompted for the vault password
+ansible-playbook local.yml --ask-vault-pass --extra-vars "host_user=$(whoami)"
+```
+
+Note: You don't need to clone the repository locally for ansible-pull; it will fetch the configuration directly from the remote repository and apply it to your system.
 
 ### Dotfiles
 
