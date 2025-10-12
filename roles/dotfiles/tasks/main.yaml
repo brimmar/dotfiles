@@ -84,6 +84,22 @@
             force: yes
             mode: 0755
 
+    - name: Install Binary Scripts
+      block:
+        - name: Copy timer script to system bin
+          copy:
+            src: "/home/{{ host_user }}/dotfiles/dotfiles/bin/timer"
+            dest: "/usr/local/bin/timer"
+            mode: 0755
+          become: yes
+
+        - name: Copy zellij-timer-status script to system bin
+          copy:
+            src: "/home/{{ host_user }}/dotfiles/dotfiles/bin/zellij-timer-status"
+            dest: "/usr/local/bin/zellij-timer-status"
+            mode: 0755
+          become: yes
+
     - name: Log dotfiles setup process
       lineinfile:
         path: "{{ log_file }}"
