@@ -3,7 +3,7 @@ layout {
 		plugin location="file:$HOME/zjstatus/target/wasm32-wasi/release/zjstatus.wasm" {
 			format_left "{mode}#[bg=#2C2C2C] {tabs}"
 			format_center "#[fg=9399B2,bold,bg=#2C2C2C]{session}"
-			format_right "{command_disk_usage} {command_memory_usage} {datetime}"
+			format_right "{command_timer_status} {command_disk_usage} {command_memory_usage} {datetime}"
 			format_space "#[bg=#2C2C2C]"
 
 			mode_normal "#[bg=#7bf1a8,fg=black] 󰀘 "
@@ -20,6 +20,11 @@ layout {
 			command_disk_usage_format "#[fg=#caffbf]▎󰗮 {stdout}"
 			command_disk_usage_interval "60"
 			command_disk_usage_rendermode "static"
+
+			command_timer_status_command "/home/brimmar/.local/bin/zellij-timer-status"
+			command_timer_status_format "#[fg=#F38BA8] {stdout}"
+			command_timer_status_interval "1"
+			command_timer_status_rendermode "static"
 
 			tab_normal "#[fg=#6C7086,bg=#2C2C2C]  {index}. {name}  "
 			tab_active "#[bg=#2C2C2C,fg=#1f2227]#[fg=#9399B2,bold,italic] {index}. {name} #[bg=#2C2C2C,fg=#1f2227]"

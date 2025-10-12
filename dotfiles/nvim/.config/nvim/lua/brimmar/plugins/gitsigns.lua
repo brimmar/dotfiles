@@ -2,39 +2,35 @@ return {
 	"lewis6991/gitsigns.nvim",
 	config = function()
 		local gitsigns = require("gitsigns")
+
+		vim.api.nvim_set_hl(0, "GitSignsAdd", { fg = "#7BC47F" })
+		vim.api.nvim_set_hl(0, "GitSignsChange", { fg = "#80B1DB" })
+		vim.api.nvim_set_hl(0, "GitSignsDelete", { fg = "#DB7F7F" })
+		vim.api.nvim_set_hl(0, "GitSignsTopdelete", { fg = "#DB7F7F" })
+		vim.api.nvim_set_hl(0, "GitSignsChangedelete", { fg = "#B87FDB" })
+
+		vim.api.nvim_set_hl(0, "GitSignsAddNr", { fg = "#7BC47F" })
+		vim.api.nvim_set_hl(0, "GitSignsChangeNr", { fg = "#80B1DB" })
+		vim.api.nvim_set_hl(0, "GitSignsDeleteNr", { fg = "#DB7F7F" })
+		vim.api.nvim_set_hl(0, "GitSignsTopdeleteNr", { fg = "#DB7F7F" })
+		vim.api.nvim_set_hl(0, "GitSignsChangedeleteNr", { fg = "#B87FDB" })
+
+		vim.api.nvim_set_hl(0, "GitSignsAddLn", { fg = "#7BC47F" })
+		vim.api.nvim_set_hl(0, "GitSignsChangeLn", { fg = "#80B1DB" })
+		vim.api.nvim_set_hl(0, "GitSignsDeleteLn", { fg = "#DB7F7F" })
+		vim.api.nvim_set_hl(0, "GitSignsTopdeleteLn", { fg = "#DB7F7F" })
+		vim.api.nvim_set_hl(0, "GitSignsChangedeleteLn", { fg = "#B87FDB" })
+
 		gitsigns.setup({
 			signs = {
-				add = {
-					hl = "GitSignsAdd",
-					text = "▎",
-					numhl = "GitSignsAddNr",
-					linehl = "GitSignsAddLn",
-				},
-				change = {
-					hl = "GitSignsChange",
-					text = "▎",
-					numhl = "GitSignsChangeNr",
-					linehl = "GitSignsChangeLn",
-				},
-				delete = {
-					hl = "GitSignsDelete",
-					text = nil,
-					numhl = "GitSignsDeleteNr",
-					linehl = "GitSignsDeleteLn",
-				},
-				topdelete = {
-					hl = "GitSignsDelete",
-					text = nil,
-					numhl = "GitSignsDeleteNr",
-					linehl = "GitSignsDeleteLn",
-				},
-				changedelete = {
-					hl = "GitSignsChange",
-					text = "▎",
-					numhl = "GitSignsChangeNr",
-					linehl = "GitSignsChangeLn",
-				},
+				add = { text = "▎" },
+				change = { text = "▎" },
+				delete = { text = nil },
+				topdelete = { text = nil },
+				changedelete = { text = nil },
+				untracked = { text = "┆" },
 			},
+			sign_priority = 20,
 			signcolumn = true,
 			numhl = false,
 			linehl = false,
@@ -47,13 +43,11 @@ return {
 			current_line_blame = false,
 			current_line_blame_opts = {
 				virt_text = true,
-				virt_text_pos = "eol", -- 'eol' or 'overlay' or 'right_align'
+				virt_text_pos = "eol",
 				delay = 1000,
 				ignore_whitespace = false,
 			},
 			current_line_blame_formatter = "<author>, <author_time:%Y-%m-%d> - <summary>",
-			sign_priority = 6,
-			status_formatter = nil, -- use default
 			update_debounce = 200,
 			max_file_length = 40000,
 			preview_config = {
@@ -63,7 +57,6 @@ return {
 				row = 0,
 				col = 1,
 			},
-			yadm = { enable = false },
 		})
 	end,
 	event = { "BufReadPre", "BufNewFile" },

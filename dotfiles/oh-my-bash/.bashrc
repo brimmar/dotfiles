@@ -1,3 +1,7 @@
+# Source local, non-versioned configurations
+if [ -f ~/.localrc ]; then
+    . ~/.localrc
+fi
 # Enable the subsequent settings only in interactive sessions
 case $- in
   *i*) ;;
@@ -128,6 +132,105 @@ _gf() {
 	delete_branches
 }
 
+google() {
+    local script_name="google"
+    echo ""
+
+    if [[ -z "$LOCAL_GEMINI_API_KEY" ]]; then
+        echo "[$script_name] > ERROR: GEMINI_API_KEY environment variable not set." >&2
+        return 1
+    fi
+
+    if ! command -v jq &> /dev/null; then
+        echo "[$script_name] > ERROR: jq is not installed. Please install it to proceed." >&2
+        return 1
+    fi
+
+    local model="gemini-2.5-flash-lite"
+    local query_string=""
+
+    case "$1" in
+        --pro)
+            model="gemini-2.5-pro"
+            shift
+            ;;
+        --flash)
+            model="gemini-2.5-flash"
+            shift
+            ;;
+        *)
+            ;;
+    esac
+
+    if [[ $# -eq 0 ]]; then
+        echo "[$script_name] > ERROR: No query provided." >&2
+        echo "Usage: google [--pro | --flash] \"<your query>\"" >&2
+        return 1
+    fi
+
+    query_string="$@"
+
+    local api_url="https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?key=${LOCAL_GEMINI_API_KEY}&alt=sse"
+
+    local json_payload
+    json_payload=$(cat <<EOF
+{
+  "contents": [{
+    "parts": [{
+      "text": "You are a world-class AI research assistant designed to simulate high-quality web research and deliver fast, trusted answers like Perplexity AI.
+
+When I ask a question:
+
+• Simulate researching multiple top-tier sources — including scientific journals, government sites, reputable media, and expert blogs.
+
+• Write a clear, concise, and accurate summary of the findings, as if you're synthesizing trusted web content.
+
+• Avoid jargon; aim for clarity and brevity, especially on complex topics.
+
+• Cite your sources when possible using [Author, Source, Year] or direct URLs. If no credible source is available, say “Source unavailable.”
+
+• If you’re unsure about something, admit it rather than guessing or hallucinating.
+
+• Present your output in the following format:
+
+Summary:
+
+A well-structured explanation that gets to the point.
+
+Citations:
+
+• [Source Name, Year]
+• [Direct link if appropriate]
+
+Always be precise, neutral in tone, and prepared for follow-up questions based on prior context. Query: ${query_string}"
+    }]
+  }],
+  "tools": [{
+    "google_search": {}
+  }]
+}
+EOF
+)
+    curl --fail --silent --location -N -X POST \
+      -H "Content-Type: application/json" \
+      -d "${json_payload}" \
+      "${api_url}" | \
+    while read -r line; do
+        if [[ $line == "data: "* ]]; then
+            local json_chunk="${line#data: }"
+            
+            local text_chunk
+            text_chunk=$(echo "$json_chunk" | jq -r '.candidates[0].content.parts[0].text // ""')
+            printf "%s" "$text_chunk"
+        fi
+    done
+
+    echo ""
+    echo ""
+    
+    return 0
+}
+
 # Compilation flags
 # export ARCHFLAGS="-arch x86_64"
 
@@ -159,7 +262,6 @@ alias gf='_gf'
 # Comandos pra ajudar na navegação no cli
 alias cl='_cl() { cd "$1"; la; }; _cl'
 alias la='exa --header --tree --level=1 --long --no-time --icons --all --group-directories-first --no-time'
-alias fd='_fd() { exa --tree -r --all | grep "$1"; }; _fd'
 
 # Comandos pra imitar a saída do vim
 alias :wq='exit'

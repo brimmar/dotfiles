@@ -27,10 +27,13 @@ return {
 				path_display = { "smart" },
 				mappings = {
 					i = {
-						["<C-k>"] = actions.move_selection_previous, --move to previous result
-						["<C-j>"] = actions.move_selection_next, -- move to next result
-						["<C-q>"] = actions.send_selected_to_qflist + actions.open_qflist,
-						["<C-t>"] = trouble_telescope.open,
+						["<C-k>"] = require("telescope.actions").move_selection_previous,
+						["<C-j>"] = require("telescope.actions").move_selection_next,
+						["<C-q>"] = function(bufnr)
+							require("telescope.actions").send_selected_to_qflist(bufnr)
+							require("telescope.actions").open_qflist(bufnr)
+						end,
+						["<C-t>"] = require("trouble.sources.telescope").open,
 					},
 				},
 				file_ignore_patterns = {
@@ -38,7 +41,31 @@ return {
 					"vendor",
 					".git",
 					"%.jpg",
+					"%.jpeg",
 					"%.png",
+					"%.gif",
+					"%.webp",
+					"%.svg",
+					"%.pdf",
+					"%.zip",
+					"%.tar.gz",
+					"%.rar",
+					"%.iso",
+					"%.bin",
+					"%.exe",
+					"%.dll",
+					"%.so",
+					"%.dylib",
+					"%.class",
+					"%.pyc",
+					"%.o",
+					"%.a",
+					"package%-lock.json",
+					"composer.lock",
+					"yarn.lock",
+					"pnpm-lock.yaml",
+					"poetry.lock",
+					"%.lock",
 				},
 			},
 		})

@@ -32,6 +32,10 @@ return {
 				enable = true,
 			},
 
+			injection = {
+				enable = true,
+			},
+
 			ensure_installed = {
 				"json",
 				"javascript",

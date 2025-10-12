@@ -1,6 +1,5 @@
 local opt = vim.opt
 
--- get the cache dir
 local get_cache_dir = function()
 	local cache_dir = os.getenv("NEOVIM_CACHE_DIR")
 	if not cache_dir then
@@ -9,21 +8,18 @@ local get_cache_dir = function()
 	return cache_dir
 end
 
--- constructs the path by joining the strings
 local join_paths = function(...)
-	local path_sep = vim.loop.os_uname().version:match("Windows") and "\\" or "/"
+	local path_sep = vim.uv.os_uname().version:match("Windows") and "\\" or "/"
 	local result = table.concat({ ... }, path_sep)
 	return result
 end
 
--- check if the path is a directory
 local is_directory = function(path)
-	local stat = vim.loop.fs_stat(path)
+	local stat = vim.uv.fs_stat(path)
 	return stat and stat.type == "directory" or false
 end
 local undodir = join_paths(get_cache_dir(), "undo")
 
--- if it's not a directory already, create that directory to be the undofile
 if not is_directory(undodir) then
 	vim.fn.mkdir(undodir, "p")
 end

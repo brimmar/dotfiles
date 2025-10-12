@@ -1,0 +1,56 @@
+#!/bin/bash
+
+# Log: Script started
+echo "Log: timer script initiated at $(date)"
+
+if [ "$#" -eq 0 ]; then
+    echo "Usage:"
+    echo "  timer <duration> [message]"
+    echo "  timer <HH:MM> [message]"
+    exit 1
+fi
+
+time_spec="$1"
+shift
+message="${*:-Time's up!}"
+
+# This is our unique marker. The status script will look for this exact comment.
+marker_comment="#ZELLIJ_TIMER_MSG=${message}"
+notify_command="notify-send -u critical -i /usr/share/icons/gnome/32x32/actions/appointment-new.png 'Timer' '$message'"
+
+# Combine the marker and the command. The marker MUST come first for easy parsing.
+full_command=$(printf "%s\n%s" "$marker_comment" "$notify_command")
+
+# Regex for duration format
+duration_regex="^[0-9]+[smhd]$"
+
+at_time_str=""
+if [[ "$time_spec" =~ $duration_regex ]]; then
+    unit="${time_spec: -1}"
+    value="${time_spec%?}"
+    full_unit=""
+    if [ "$unit" == "s" ]; then full_unit="seconds"; fi
+    if [ "$unit" == "m" ]; then full_unit="minutes"; fi
+    if [ "$unit" == "h" ]; then full_unit="hours"; fi
+    if [ "$unit" == "d" ]; then full_unit="days"; fi
+    
+    at_time_str="now + $value $full_unit"
+    echo "Timer set for $value $full_unit from now."
+fi
+
+# Regex for HH:MM format
+time_regex="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$"
+
+if [[ "$time_spec" =~ $time_regex ]]; then
+    at_time_str="$time_spec"
+    echo "Alarm set for $time_spec."
+fi
+
+if [ -z "$at_time_str" ]; then
+    echo "Error: Invalid time format. Use '10m', '1h', or '14:30'."
+    exit 1
+fi
+
+# Log: Scheduling command with marker
+echo "Log: Scheduling with 'at' for: $at_time_str"
+echo "$full_command" | at "$at_time_str"

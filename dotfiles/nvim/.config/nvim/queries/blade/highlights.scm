@@ -1,0 +1,10 @@
+;; extends
+((directive) @function)
+((directive_start) @function)
+((directive_end) @function)
+((comment) @comment)
+((parameter) @parameter)
+((php_only) @embedded)
+((bracket_start) @punctuation.bracket)
+((bracket_end) @punctuation.bracket)
+(keyword) @keyword

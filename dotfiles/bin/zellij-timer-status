@@ -1,0 +1,49 @@
+#!/bin/bash
+
+LOG_FILE="/tmp/zellij_timer_status.log"
+echo "Log: Status script running at $(date)" > "$LOG_FILE"
+
+now_ts=$(date +%s)
+outputs=()
+
+# Loop through each job in the user's 'at' queue.
+# 'atq' output format: job_id date time queue user
+while read -r job_id job_date job_time queue user; do
+    # Log: Checking job
+    echo "Log: Checking job ID $job_id" >> "$LOG_FILE"
+
+    # Inspect the job's command script for our unique marker
+    job_content=$(at -c "$job_id")
+    marker_line=$(echo "$job_content" | grep '^#ZELLIJ_TIMER_MSG=')
+
+    # If the marker exists, this is one of our timers.
+    if [ -n "$marker_line" ]; then
+        # Extract the message from the marker line
+        message=${marker_line#*=}
+        echo "Log: Found our timer with message: '$message'" >> "$LOG_FILE"
+        
+        # Reconstruct the full time string for 'date' to parse
+        job_time_str="$job_date $job_time"
+        end_ts=$(date -d "$job_time_str" +%s)
+        
+        remaining_seconds=$((end_ts - now_ts))
+        
+        if [ $remaining_seconds -gt 0 ]; then
+            mins=$((remaining_seconds / 60))
+            secs=$((remaining_seconds % 60))
+            formatted_time=$(printf "%02d:%02d" $mins $secs)
+            
+            short_message=""
+            if [ "$message" != "Time's up!" ]; then
+                short_message="$(echo "$message" | cut -c1-15)... "
+            fi
+            outputs+=("$short_message$formatted_time")
+        fi
+    fi
+done < <(atq) # Use process substitution to pipe atq output into the loop
+
+# If there are timers to display, join them with a separator.
+if [ ${#outputs[@]} -gt 0 ]; then
+    # (IFS=...) is a local scope change for the echo command
+    (IFS=' | '; echo "⏰ ${outputs[*]}")
+fi

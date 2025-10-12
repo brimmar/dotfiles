@@ -41,7 +41,12 @@ parse_git_branch () {
 }
 
 function _omb_theme_PROMPT_COMMAND() {
-  PS1=" \[${BOLD}${WHITE}\][\A] \[${BOLD}${MAGENTA}\]\u \[$WHITE\]in \[$GREEN\]\w\[$WHITE\]\$([[ -n \$(git branch 2> /dev/null) ]] && echo \" on \")\[$PURPLE\]\$(parse_git_branch)\[$WHITE\]\$ \[$RESET\]"
+  local python_env=""
+  if [[ -n "$VIRTUAL_ENV" ]]; then
+    python_env=" \[$WHITE\]using \[${BOLD}${ORANGE}\]$(basename $VIRTUAL_ENV)\[$WHITE\]"
+  fi
+  
+  PS1=" \[${BOLD}${WHITE}\][\A] \[${BOLD}${MAGENTA}\]\u \[$WHITE\]in \[$GREEN\]\w${python_env}\$([[ -n \$(git branch 2> /dev/null) ]] && echo \" \[$WHITE\]on \")\[$PURPLE\]\$(parse_git_branch)\[$WHITE\]\$ \[$RESET\]"
 }
 
 _omb_util_add_prompt_command _omb_theme_PROMPT_COMMAND

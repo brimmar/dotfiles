@@ -2,6 +2,7 @@ return {
 	"hrsh7th/nvim-cmp",
 	event = "InsertEnter",
 	dependencies = {
+		"hrsh7th/cmp-nvim-lsp",
 		"hrsh7th/cmp-buffer",
 		"hrsh7th/cmp-path",
 		"L3MON4D3/LuaSnip",
@@ -11,58 +12,19 @@ return {
 		local cmp = require("cmp")
 		local luasnip = require("luasnip")
 
-		require("luasnip.loaders.from_lua").load({ paths = "~/.config/nvim/lua/brimmar/plugins/snippets/" })
-
-		local types = require("luasnip.util.types")
-		luasnip.config.set_config({
-			history = true,
-			updateevents = "TextChanged,TextChangedI",
-			enable_autosnippets = true,
-			ext_opts = {
-				[types.choiceNode] = {
-					active = {
-						virt_text = { { ".", "GruvboxOrange" } },
-					},
-				},
-			},
-		})
-
-		local keymap = vim.keymap
-
-		keymap.set({ "i", "s" }, "<a-k>", function()
-			if luasnip.jumpable(1) then
-				luasnip.jump(1)
-			end
-		end, { silent = true })
-		keymap.set({ "i", "s" }, "<a-j>", function()
-			if luasnip.jumpable(-1) then
-				luasnip.jump(-1)
-			end
-		end, { silent = true })
-		keymap.set({ "i", "s" }, "<a-l>", function()
-			if luasnip.choice_active() then
-				luasnip.change_choice(1)
-			else
-				--print current line
-				local t = os.date("*t")
-				local time = string.format("%02d:%02d:%02d", t.hour, t.min, t.sec)
-				print(time)
-			end
-		end)
-		keymap.set({ "i", "s" }, "<a-h>", function()
-			if luasnip.choice_active() then
-				luasnip.change_choice(-1)
-			end
+		pcall(function()
+			require("luasnip.loaders.from_lua").load({ paths = "~/.config/nvim/lua/brimmar/plugins/snippets/" })
 		end)
 
 		cmp.setup({
-			completion = {
-				completeopt = "menu,menuone, preview, noselect",
-			},
 			snippet = {
 				expand = function(args)
 					luasnip.lsp_expand(args.body)
 				end,
+			},
+			window = {
+				completion = cmp.config.window.bordered(),
+				documentation = cmp.config.window.bordered(),
 			},
 			mapping = cmp.mapping.preset.insert({
 				["<C-k>"] = cmp.mapping.select_prev_item(),
@@ -72,13 +34,46 @@ return {
 				["<C-Space>"] = cmp.mapping.complete(),
 				["<C-e>"] = cmp.mapping.abort(),
 				["<CR>"] = cmp.mapping.confirm({ select = false }),
+				["<Tab>"] = cmp.mapping(function(fallback)
+					if cmp.visible() then
+						cmp.select_next_item()
+					elseif luasnip.expand_or_jumpable() then
+						luasnip.expand_or_jump()
+					else
+						fallback()
+					end
+				end, { "i", "s" }),
+				["<S-Tab>"] = cmp.mapping(function(fallback)
+					if cmp.visible() then
+						cmp.select_prev_item()
+					elseif luasnip.jumpable(-1) then
+						luasnip.jump(-1)
+					else
+						fallback()
+					end
+				end, { "i", "s" }),
 			}),
 			sources = cmp.config.sources({
-				{ name = "luasnip", max_item_count = 2 },
-				{ name = "nvim_lsp", max_item_count = 10 },
-				{ name = "path" },
-				{ name = "buffer", max_item_count = 4 },
+				{ name = "nvim_lsp", priority = 1000 },
+				{ name = "luasnip", priority = 750 },
+				{ name = "buffer", priority = 500 },
+				{ name = "path", priority = 250 },
 			}),
+			formatting = {
+				format = function(entry, vim_item)
+					vim_item.menu = ({
+						luasnip = "[Snippet]",
+						nvim_lsp = "[LSP]",
+						buffer = "[Buffer]",
+						path = "[Path]",
+					})[entry.source.name]
+					return vim_item
+				end,
+			},
+			preselect = cmp.PreselectMode.Item,
+			completion = {
+				completeopt = "menu,menuone,noinsert",
+			},
 		})
 	end,
 }
