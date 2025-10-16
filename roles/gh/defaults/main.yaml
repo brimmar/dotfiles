@@ -1,0 +1,4 @@
+---
+# defaults file for gh
+gh_package_name: "gh"
+gh_version: "latest"

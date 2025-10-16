@@ -1,0 +1,64 @@
+- name: Install GitHub CLI
+  block:
+    - name: Log GitHub CLI installation start
+      lineinfile:
+        path: "{{ log_file }}"
+        line: "{{ ansible_date_time.iso8601 }} - Starting GitHub CLI installation"
+      ignore_errors: true
+
+    - name: Install GitHub CLI for Debian-based systems
+      when: ansible_distribution in ["Debian", "Ubuntu", "Pop!_OS"]
+      block:
+        - name: Ensure wget is installed
+          apt:
+            name: wget
+            state: present
+            update_cache: yes
+
+        - name: Create apt keyrings directory
+          file:
+            path: /etc/apt/keyrings
+            state: directory
+            mode: '0755'
+
+        - name: Download GitHub CLI GPG key
+          get_url:
+            url: https://cli.github.com/packages/githubcli-archive-keyring.gpg
+            dest: /etc/apt/keyrings/githubcli-archive-keyring.gpg
+            mode: '0644'
+            force: yes
+
+        # Set dpkg architecture mapping
+        - name: Set dpkg architecture
+          set_fact:
+            dpkg_architecture: "{{ 'amd64' if ansible_architecture == 'x86_64' else ansible_architecture }}"
+
+        - name: Add GitHub CLI apt repository
+          apt_repository:
+            repo: "deb [arch={{ dpkg_architecture }} signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main"
+            state: present
+
+        - name: Update package cache
+          apt:
+            update_cache: yes
+
+        - name: Install GitHub CLI
+          apt:
+            name: "{{ gh_package_name }}"
+            state: present
+
+    - name: Log GitHub CLI installation success
+      lineinfile:
+        path: "{{ log_file }}"
+        line: "{{ ansible_date_time.iso8601 }} - GitHub CLI installed successfully"
+      ignore_errors: true
+
+  rescue:
+    - name: Log GitHub CLI installation failure
+      lineinfile:
+        path: "{{ log_file }}"
+        line: "{{ ansible_date_time.iso8601 }} - GitHub CLI installation failed"
+      ignore_errors: true
+    - name: Fail with overall error message
+      fail:
+        msg: "GitHub CLI installation failed. Please check the logs for more details."

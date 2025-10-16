@@ -73,6 +73,7 @@
     - { role: discord, tags: discord }
     - { role: docker, tags: docker }
     - { role: fonts, tags: fonts }
+    - { role: gh, tags: gh }
     - { role: gnome_tweaks, tags: gnome_tweaks }
     - { role: go, tags: go }
     - { role: gum, tags: gum }
