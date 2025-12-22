@@ -5,15 +5,17 @@
       block:
         - name: Add Syncthing Repository
           block:
-            - name: Add Syncthing keyring
-              apt_key:
+            - name: Download Syncthing GPG key
+              get_url:
                 url: https://syncthing.net/release-key.txt
-                state: present
+                dest: /usr/share/keyrings/syncthing-archive-keyring.gpg
+                mode: '0644'
 
             - name: Add Syncthing Repository
               apt_repository:
-                repo: deb https://apt.syncthing.net/ syncthing stable
+                repo: "deb [signed-by=/usr/share/keyrings/syncthing-archive-keyring.gpg] https://apt.syncthing.net/ syncthing stable"
                 state: present
+                filename: syncthing
 
         - name: Install APT Syncthing Package
           apt:

@@ -9,15 +9,17 @@
     - name: Add Docker Repository
       when: ansible_distribution in ["Debian", "Ubuntu", "Pop!_OS"]
       block:
-        - name: Add Docker Keyring
-          apt_key:
+        - name: Download Docker GPG key
+          get_url:
             url: https://download.docker.com/linux/ubuntu/gpg
-            state: present
+            dest: /usr/share/keyrings/docker-archive-keyring.gpg
+            mode: '0644'
 
         - name: Add Docker Repository
           apt_repository:
-            repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable
+            repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
             state: present
+            filename: docker
       rescue:
         - name: Log Docker repository addition failure
           lineinfile:
