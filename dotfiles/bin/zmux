@@ -1,0 +1,804 @@
+#!/usr/bin/env bash
+# zmux: AI Agent Harness Orchestration Layer for Zellij (agy, codex, opencode)
+set -eo pipefail
+
+RUNNER="/home/brimmar/.local/bin/zellij-agent-runner"
+AGENT_DIR="/tmp/zellij_agents"
+DEFAULT_ENGINE="${DEFAULT_AI_AGENT:-opencode}"
+
+show_help() {
+    cat <<'EOF'
+zmux - AI Agent Harness Orchestration Layer for Zellij
+
+ENGINES:
+    opencode (OpenCode AI - 1.18.12)
+    codex    (OpenAI Codex CLI)
+    agy      (Google Antigravity CLI)
+
+INSPECTION & LOCATION:
+    hud
+        Interactive full-screen HUD dashboard with live auto-refresh and quick keys
+    ps, list, ls
+        Print a high-contrast table of active AI agents, locations, sessions, and panes
+    where [engine|pid], locate [engine|pid]
+        Show detailed location cards and task metadata for running agents
+    jump <pane_id>
+        Focus and jump directly to the specified agent pane
+
+TAB ORCHESTRATION (Top-Layer Agent Workspaces):
+    tab [engine] [prompt...]
+        Spawn / Switch to a dedicated AI Agent Tab with live state tracking
+        Example: zmux tab opencode
+                 zmux tab codex "Implement authentication middleware"
+                 zmux tab agy
+    fork-tab [engine]
+        Fork the most recent agent session into a brand new dedicated Tab
+
+CORE PANE & FLOATING COMMANDS:
+    side [engine] [prompt...]
+        Spawn an AI Agent in a vertical split pane (right)
+    float [engine] [prompt...]
+        Open a centered floating AI Agent sidecar
+    dump [engine] [instruction...]
+        Capture active terminal screen/error & send to Agent for diagnosis
+    emit <working|needs_input|ready> [engine] [message]
+        Emit real-time state event directly to zjstatus top bar & tab name
+
+SESSION FORKING (Branching):
+    fork [engine]
+        Fork and branch the most recent session of the specified agent
+        Example: zmux fork opencode   (runs: opencode --continue --fork)
+                 zmux fork codex      (runs: codex fork --last)
+                 zmux fork agy        (runs: agy --continue)
+
+    fork-opencode, fork-codex, fork-agy
+        Direct shortcuts to fork sessions in a floating sidecar window
+
+INTER-AGENT COMMUNICATION (Agent-to-Agent):
+    pipe <source_engine> <target_engine> [instruction...]
+        Pipe output/context from one agent to another
+    tell <message...>
+        Send text/prompt into a specific running agent pane
+    broadcast <message...>
+        Broadcast a message/instruction to all running agent panes
+    arena [engine1] [engine2] [engine3]
+        Open an Agent Arena comparing agy, codex, and opencode side by side
+    swarm <engine:task1> <engine:task2> ...
+        Launch a parallel multi-agent swarm across stacked/tiled panes
+    kill-all
+        Terminate all background agent worker sessions
+EOF
+}
+
+is_known_engine() {
+    case "$1" in
+        opencode|codex|agy|antigravity) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
+parse_engine_and_prompt() {
+    if is_known_engine "$1"; then
+        ENGINE="$1"
+        shift
+        PROMPT="$*"
+    else
+        ENGINE="$DEFAULT_ENGINE"
+        PROMPT="$*"
+    fi
+}
+
+format_time() {
+    local seconds="$1"
+    local m=$((seconds / 60))
+    local s=$((seconds % 60))
+    printf "%02dm %02ds" $m $s
+}
+
+pad_engine() {
+    case "$1" in
+        opencode) printf "\033[1;38;2;242;205;205m󰚩 opencode\033[0m       " ;;
+        codex)    printf "\033[1;38;2;137;220;235m󰩏 codex\033[0m          " ;;
+        agy|antigravity) printf "\033[1;38;2;203;166;247m󱚤 agy\033[0m            " ;;
+        *)        printf "\033[1;38;2;245;194;231m󱚤 %-15s\033[0m" "$1" ;;
+    esac
+}
+
+format_engine_icon() {
+    case "$1" in
+        opencode) echo -e "\033[1;38;2;242;205;205m󰚩 opencode\033[0m" ;;
+        codex)    echo -e "\033[1;38;2;137;220;235m󰩏 codex\033[0m" ;;
+        agy|antigravity) echo -e "\033[1;38;2;203;166;247m󱚤 agy\033[0m" ;;
+        *)        echo -e "\033[1;38;2;245;194;231m󱚤 $1\033[0m" ;;
+    esac
+}
+
+# Collect all running agents (registered + detected)
+collect_agents() {
+    declare -g -A SEEN_PIDS=()
+    declare -g -a AGENT_LIST=()
+
+    # 1. Registered zmux agents
+    if [ -d "$AGENT_DIR" ]; then
+        for file in "$AGENT_DIR"/agent_*.json; do
+            [ ! -f "$file" ] && continue
+            local pid engine mode pane session cwd task start
+            pid=$(grep -o '"pid": *[0-9]*' "$file" 2>/dev/null | awk -F: '{print $2}' | tr -d ' ')
+            [ -z "$pid" ] && continue
+
+            if kill -0 "$pid" 2>/dev/null; then
+                engine=$(grep -o '"engine": *"[^"]*"' "$file" 2>/dev/null | awk -F'"' '{print $4}')
+                mode=$(grep -o '"mode": *"[^"]*"' "$file" 2>/dev/null | awk -F'"' '{print $4}')
+                pane=$(grep -o '"pane_id": *"[^"]*"' "$file" 2>/dev/null | awk -F'"' '{print $4}')
+                session=$(grep -o '"session": *"[^"]*"' "$file" 2>/dev/null | awk -F'"' '{print $4}')
+                cwd=$(grep -o '"cwd": *"[^"]*"' "$file" 2>/dev/null | awk -F'"' '{print $4}')
+                task=$(grep -o '"task": *"[^"]*"' "$file" 2>/dev/null | awk -F'"' '{print $4}')
+                start=$(grep -o '"start_time": *[0-9]*' "$file" 2>/dev/null | awk -F: '{print $2}' | tr -d ' ')
+
+                SEEN_PIDS["$pid"]=1
+                AGENT_LIST+=("$pid|$engine|${session:-main}|${pane:-N/A}|${cwd:-/home/brimmar}|${mode:-normal}|${task:-interactive}|${start:-$(date +%s)}")
+            else
+                rm -f "$file"
+            fi
+        done
+    fi
+
+    # 2. Standalone process discovery
+    local detected_pids
+    detected_pids=$(pgrep -f "opencode|codex|agy" 2>/dev/null || true)
+    for p in $detected_pids; do
+        [ "$p" -eq $$ ] && continue
+        [ -n "${SEEN_PIDS[$p]}" ] && continue
+        [ ! -d "/proc/$p" ] && continue
+
+        local comm cmdline engine z_session z_pane p_cwd p_start now
+        comm=$(cat "/proc/$p/comm" 2>/dev/null || true)
+        [ "$comm" == "bash" ] || [ "$comm" == "sh" ] || [ "$comm" == "grep" ] && continue
+
+        cmdline=$(tr '\0' ' ' < "/proc/$p/cmdline" 2>/dev/null | tr '|' ' ' || true)
+        case "$cmdline" in
+            *opencode*) engine="opencode" ;;
+            *codex*)    engine="codex" ;;
+            *agy*)      engine="agy" ;;
+            *) continue ;;
+        esac
+
+        z_session=$(tr '\0' '\n' < "/proc/$p/environ" 2>/dev/null | grep '^ZELLIJ_SESSION_NAME=' | cut -d= -f2 || true)
+        z_pane=$(tr '\0' '\n' < "/proc/$p/environ" 2>/dev/null | grep '^ZELLIJ_PANE_ID=' | cut -d= -f2 || true)
+        p_cwd=$(readlink -f "/proc/$p/cwd" 2>/dev/null || echo "unknown")
+        
+        now=$(date +%s)
+        p_start=$now
+
+        SEEN_PIDS["$p"]=1
+        AGENT_LIST+=("$p|$engine|${z_session:-standalone}|${z_pane:-N/A}|$p_cwd|standalone|$cmdline|$p_start")
+    done
+}
+
+get_agent_state() {
+    local pid="$1"
+    local engine="$2"
+    [ -z "$pid" ] || [ ! -d "/proc/$pid" ] && echo "dead" && return
+
+    if [ -n "$engine" ]; then
+        local ev_file="$AGENT_DIR/${engine}_event.json"
+        if [ -f "$ev_file" ]; then
+            local st
+            st=$(grep -o '"state": *"[^"]*"' "$ev_file" 2>/dev/null | awk -F'"' '{print $4}')
+            if [ -n "$st" ]; then
+                echo "$st"
+                return
+            fi
+        fi
+    fi
+
+    echo "ready"
+}
+
+format_state_badge() {
+    case "$1" in
+        working)
+            echo -e "\033[1;38;2;249;226;175m󱑋 WORKING\033[0m"
+            ;;
+        needs_input)
+            echo -e "\033[1;38;2;250;179;135m󰏤 INPUT\033[0m"
+            ;;
+        *)
+            echo -e "\033[1;38;2;166;227;161m󰄬 READY\033[0m"
+            ;;
+    esac
+}
+
+print_ps_table() {
+    collect_agents
+    count=${#AGENT_LIST[@]}
+
+    echo ""
+    echo -e " \033[1;38;2;137;180;250m󱚤\033[0m \033[1;38;2;205;214;244mACTIVE AI AGENTS IN ZELLIJ\033[0m \033[38;2;147;153;178m($count active)\033[0m"
+    echo ""
+    if [ "$count" -eq 0 ]; then
+        echo -e "   \033[38;2;147;153;178mNo AI agents are currently running.\033[0m"
+        echo ""
+        return
+    fi
+
+    printf " \033[1;38;2;147;153;178m%-18s %-8s %-15s %-10s %-8s %-24s %-8s %-20s\033[0m\n" \
+        "ENGINE" "PID" "STATE" "SESSION" "PANE" "CWD" "UPTIME" "MODE / TASK"
+    printf " \033[38;2;108;112;134m%s\033[0m\n" \
+        "────────────────────────────────────────────────────────────────────────────────────────────────────────"
+
+    now=$(date +%s)
+    for item in "${AGENT_LIST[@]}"; do
+        IFS='|' read -r pid engine session pane cwd mode task start <<< "$item"
+        elapsed=$((now - start))
+        uptime_str=$(format_time "$elapsed")
+        state=$(get_agent_state "$pid" "$engine")
+        state_badge=$(format_state_badge "$state")
+        
+        short_cwd="${cwd/#$HOME/~}"
+        [ ${#short_cwd} -gt 23 ] && short_cwd="...${short_cwd: -20}"
+
+        short_task="$task"
+        [ ${#short_task} -gt 20 ] && short_task="$(echo "$task" | cut -c1-17)..."
+
+        printf " %s \033[38;2;205;214;244m%-8s\033[0m %-23b \033[38;2;137;180;250m%-10s\033[0m \033[38;2;249;226;175m%-8s\033[0m \033[38;2;203;166;247m%-24s\033[0m \033[38;2;166;227;161m%-8s\033[0m \033[38;2;137;220;235m%-20s\033[0m\n" \
+            "$(pad_engine "$engine")" "$pid" "$state_badge" "$session" "$pane" "$short_cwd" "$uptime_str" "[$mode] $short_task"
+    done
+    echo ""
+}
+
+render_hud() {
+    # Full screen paint with solid background
+    clear
+    print_ps_table
+    echo -e " \033[38;2;108;112;134m────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m"
+    echo -e "  \033[1;38;2;137;180;250m[q / Esc / Enter]\033[0m \033[38;2;205;214;244mClose HUD\033[0m   \033[1;38;2;166;227;161m[r]\033[0m \033[38;2;205;214;244mRefresh\033[0m   \033[1;38;2;249;226;175m[w]\033[0m \033[38;2;205;214;244mDetailed Cards\033[0m   \033[1;38;2;243;139;168m[k]\033[0m \033[38;2;205;214;244mKill All\033[0m"
+    echo ""
+}
+
+kill_all_agents() {
+    if [ -d "$AGENT_DIR" ]; then
+        for file in "$AGENT_DIR"/*.json; do
+            [ ! -f "$file" ] && continue
+            local pid
+            pid=$(grep -o '"pid": *[0-9]*' "$file" 2>/dev/null | awk -F: '{print $2}' | tr -d ' ')
+            if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+                kill -TERM "$pid" 2>/dev/null || kill -9 "$pid" 2>/dev/null || true
+            fi
+            rm -f "$file"
+        done
+    fi
+}
+
+is_agent_alive() {
+    local pid="$1"
+    local eng="$2"
+    [ -z "$pid" ] && return 1
+    [ ! -d "/proc/$pid" ] && return 1
+    kill -0 "$pid" 2>/dev/null || return 1
+
+    local comm cmd
+    comm=$(cat "/proc/$pid/comm" 2>/dev/null || true)
+    cmd=$(tr '\0' ' ' < "/proc/$pid/cmdline" 2>/dev/null || true)
+
+    case "$eng" in
+        opencode)
+            [[ "$comm" == *"opencode"* || "$cmd" =~ (^|[ /])opencode([ /]|$) ]] && return 0
+            ;;
+        codex)
+            [[ "$comm" == *"codex"* || "$cmd" =~ (^|[ /])codex([ /]|$) ]] && return 0
+            ;;
+        agy|antigravity)
+            [[ "$comm" == *"agy"* || "$cmd" =~ (^|[ /])agy([ /]|$) ]] && return 0
+            ;;
+    esac
+    return 1
+}
+
+is_agent_alive_in_pane() {
+    local pane_id="$1"
+    local eng="$2"
+    local pid="$3"
+    local session="$4"
+
+    # 1. Direct PID validation
+    if is_agent_alive "$pid" "$eng"; then
+        return 0
+    fi
+
+    # 2. Check if active agent process is running in that pane
+    if [ -n "$pane_id" ]; then
+        for p in $(pgrep -u "$UID" "opencode|codex|agy" 2>/dev/null || true); do
+            [ ! -d "/proc/$p" ] && continue
+            local p_pane p_sess
+            p_pane=$(tr '\0' '\n' 2>/dev/null < "/proc/$p/environ" | grep -a '^ZELLIJ_PANE_ID=' | cut -d= -f2 || true)
+            p_sess=$(tr '\0' '\n' 2>/dev/null < "/proc/$p/environ" | grep -a '^ZELLIJ_SESSION_NAME=' | cut -d= -f2 || true)
+
+            if [ "$p_pane" == "$pane_id" ]; then
+                if [ -n "$session" ] && [ -n "$p_sess" ] && [ "$p_sess" != "$session" ]; then
+                    continue
+                fi
+                if is_agent_alive "$p" "$eng"; then
+                    return 0
+                fi
+            fi
+        done
+    fi
+
+    return 1
+}
+
+build_tab_title() {
+    local target_tab="$1"
+    local emitting_engine="${2:-}"
+    local emitting_pane="${3:-}"
+
+    declare -a instance_parts=()
+    declare -A seen_panes=()
+
+    # 1. Check all event files for this tab
+    if [ -d "$AGENT_DIR" ]; then
+        for ev in "$AGENT_DIR"/event_pane_*.json; do
+            [ ! -f "$ev" ] && continue
+            content=$(< "$ev")
+
+            local ev_tab="" ev_pane="" ev_eng="" ev_st="ready"
+            if [[ $content =~ \"tab_id\":[[:space:]]*\"([^\"]+)\" ]]; then
+                ev_tab="${BASH_REMATCH[1]}"
+            fi
+            if [[ $content =~ \"pane_id\":[[:space:]]*\"([^\"]+)\" ]]; then
+                ev_pane="${BASH_REMATCH[1]}"
+            fi
+            if [[ $content =~ \"engine\":[[:space:]]*\"([^\"]+)\" ]]; then
+                ev_eng="${BASH_REMATCH[1]}"
+            fi
+            if [[ $content =~ \"state\":[[:space:]]*\"([^\"]+)\" ]]; then
+                ev_st="${BASH_REMATCH[1]}"
+            fi
+
+            if [ "$ev_tab" == "$target_tab" ] && [ -n "$ev_pane" ] && [ -n "$ev_eng" ]; then
+                seen_panes["$ev_pane"]=1
+
+                local icon="󱚤"
+                [ "$ev_eng" == "opencode" ] && icon="󰚩"
+                [ "$ev_eng" == "codex" ] && icon="󰩏"
+
+                local sym="󰄬"
+                [ "$ev_st" == "working" ] && sym="󱑋"
+                [ "$ev_st" == "needs_input" ] && sym="󰏤"
+
+                instance_parts+=("$icon $ev_eng $sym")
+            fi
+        done
+    fi
+
+    # 2. If an emitting engine on a new pane is launching
+    if [ -n "$emitting_engine" ] && [ -n "$emitting_pane" ] && [ -z "${seen_panes[$emitting_pane]}" ]; then
+        local icon="󱚤"
+        [ "$emitting_engine" == "opencode" ] && icon="󰚩"
+        [ "$emitting_engine" == "codex" ] && icon="󰩏"
+        instance_parts+=("$icon $emitting_engine 󰄬")
+    fi
+
+    local count=${#instance_parts[@]}
+    if [ "$count" -eq 0 ]; then
+        local pos
+        pos=$(zellij action list-tabs 2>/dev/null | awk -v id="$target_tab" '$1==id {print $2}')
+        if [ -n "$pos" ]; then
+            echo "Tab $((pos + 1))"
+        else
+            echo "Tab 1"
+        fi
+    elif [ "$count" -eq 1 ]; then
+        echo "${instance_parts[0]}"
+    elif [ "$count" -eq 2 ]; then
+        echo "${instance_parts[0]} │ ${instance_parts[1]}"
+    elif [ "$count" -eq 3 ]; then
+        echo "${instance_parts[0]} │ ${instance_parts[1]} │ ${instance_parts[2]}"
+    else
+        echo "󰗮 $count Agents"
+    fi
+}
+
+cmd="${1:-help}"
+shift || true
+
+case "$cmd" in
+    hud)
+        tput smcup 2>/dev/null || true
+        tput civis 2>/dev/null || true
+        cleanup_hud() {
+            tput cnorm 2>/dev/null || true
+            tput rmcup 2>/dev/null || true
+        }
+        trap cleanup_hud EXIT INT TERM
+
+        while true; do
+            render_hud
+            if read -rsn1 -t 2 key; then
+                case "$key" in
+                    q|Q|$'\e')
+                        break
+                        ;;
+                    r|R)
+                        continue
+                        ;;
+                    w|W)
+                        clear
+                        zmux where
+                        echo ""
+                        echo -e "  \033[1;38;2;137;180;250m[Press any key to return]\033[0m"
+                        read -rsn1 _ || true
+                        ;;
+                    k|K)
+                        kill_all_agents
+                        ;;
+                    *)
+                        ;;
+                esac
+            else
+                # Timeout expired: auto-refresh HUD without exiting
+                continue
+            fi
+        done
+        ;;
+
+    ps|list|ls|status)
+        print_ps_table
+        ;;
+
+    where|locate|info)
+        collect_agents
+        target="${1:-}"
+
+        count=0
+        now=$(date +%s)
+        for item in "${AGENT_LIST[@]}"; do
+            IFS='|' read -r pid engine session pane cwd mode task start <<< "$item"
+            if [ -n "$target" ] && [ "$target" != "$engine" ] && [ "$target" != "$pid" ]; then
+                continue
+            fi
+            count=$((count + 1))
+            elapsed=$((now - start))
+            uptime_str=$(format_time "$elapsed")
+
+            state=$(get_agent_state "$pid" "$engine")
+            state_badge=$(format_state_badge "$state")
+
+            echo -e "\033[38;2;137;180;250m┌──────────────────────────────────────────────────────────────────┐\033[0m"
+            printf "\033[38;2;137;180;250m│\033[0m  %-31b  \033[1;38;2;205;214;244mPID:\033[0m \033[38;2;249;226;175m%-8s\033[0m \033[1;38;2;205;214;244mSession:\033[0m \033[38;2;137;180;250m%-16s\033[0m \033[38;2;137;180;250m│\033[0m\n" "$(format_engine_icon "$engine")" "$pid" "$session"
+            echo -e "\033[38;2;137;180;250m├──────────────────────────────────────────────────────────────────┤\033[0m"
+            printf "\033[38;2;137;180;250m│\033[0m \033[1;38;2;249;226;175m• Current State\033[0m  : %-46b \033[38;2;137;180;250m│\033[0m\n" "$state_badge"
+            printf "\033[38;2;137;180;250m│\033[0m \033[1;38;2;249;226;175m• Pane Location\033[0m  : \033[38;2;205;214;244m%-46s\033[0m \033[38;2;137;180;250m│\033[0m\n" "Pane ID: $pane"
+            printf "\033[38;2;137;180;250m│\033[0m \033[1;38;2;249;226;175m• Working Dir\033[0m    : \033[38;2;203;166;247m%-46s\033[0m \033[38;2;137;180;250m│\033[0m\n" "$cwd"
+            printf "\033[38;2;137;180;250m│\033[0m \033[1;38;2;249;226;175m• Mode / Branch\033[0m  : \033[38;2;137;220;235m%-46s\033[0m \033[38;2;137;180;250m│\033[0m\n" "$mode"
+            printf "\033[38;2;137;180;250m│\033[0m \033[1;38;2;249;226;175m• Uptime\033[0m         : \033[38;2;166;227;161m%-46s\033[0m \033[38;2;137;180;250m│\033[0m\n" "$uptime_str"
+            printf "\033[38;2;137;180;250m│\033[0m \033[1;38;2;249;226;175m• Active Task\033[0m    : \033[38;2;205;214;244m%-46s\033[0m \033[38;2;137;180;250m│\033[0m\n" "$task"
+            echo -e "\033[38;2;137;180;250m└──────────────────────────────────────────────────────────────────┘\033[0m"
+        done
+
+        if [ "$count" -eq 0 ]; then
+            echo "No matching active agent found."
+        fi
+        ;;
+
+    jump|focus)
+        target_pane="${1:-}"
+        if [ -z "$target_pane" ]; then
+            echo "Usage: zmux jump <pane_id>"
+            exit 1
+        fi
+        zellij action focus-next-pane
+        ;;
+
+    side|spawn)
+        parse_engine_and_prompt "$@"
+        agent_id="${ENGINE}_$(date +%s)_$RANDOM"
+        zellij action new-pane --direction right --name "󱚤 $ENGINE" -- "$RUNNER" "$agent_id" "$ENGINE" "normal" $PROMPT
+        ;;
+
+    float|pop)
+        parse_engine_and_prompt "$@"
+        agent_id="float_${ENGINE}_$(date +%s)_$RANDOM"
+        zellij action new-pane --floating --width 78% --height 80% --x 11% --y 10% --name "󱚤 $ENGINE Sidecar" -- "$RUNNER" "$agent_id" "$ENGINE" "normal" $PROMPT
+        ;;
+
+    # Session Forking
+    fork)
+        parse_engine_and_prompt "$@"
+        agent_id="fork_${ENGINE}_$(date +%s)_$RANDOM"
+        zellij action new-pane --direction right --name "󱚤 $ENGINE (fork)" -- "$RUNNER" "$agent_id" "$ENGINE" "fork"
+        ;;
+
+    fork-float)
+        parse_engine_and_prompt "$@"
+        agent_id="fork_float_${ENGINE}_$(date +%s)_$RANDOM"
+        zellij action new-pane --floating --width 78% --height 80% --x 11% --y 10% --name "󱚤 $ENGINE (forked)" -- "$RUNNER" "$agent_id" "$ENGINE" "fork"
+        ;;
+
+    fork-opencode)
+        agent_id="fork_opencode_$(date +%s)_$RANDOM"
+        zellij action new-pane --floating --width 78% --height 80% --x 11% --y 10% --name "󰚩 opencode (forked)" -- "$RUNNER" "$agent_id" "opencode" "fork"
+        ;;
+
+    fork-codex)
+        agent_id="fork_codex_$(date +%s)_$RANDOM"
+        zellij action new-pane --floating --width 78% --height 80% --x 11% --y 10% --name "󰘦 codex (forked)" -- "$RUNNER" "$agent_id" "codex" "fork"
+        ;;
+
+    fork-agy)
+        agent_id="fork_agy_$(date +%s)_$RANDOM"
+        zellij action new-pane --floating --width 78% --height 80% --x 11% --y 10% --name "󱚤 agy (forked)" -- "$RUNNER" "$agent_id" "agy" "fork"
+        ;;
+
+    # Inter-Agent Communication
+    pipe)
+        src_engine="${1:-agy}"
+        dst_engine="${2:-opencode}"
+        shift 2 || true
+        instruction="${*:-Review and continue the task based on the context above.}"
+
+        dump_file="/tmp/zellij_interagent_pipe_$$.txt"
+        zellij action dump-screen "$dump_file"
+        sleep 0.1
+
+        prompt_payload="=== CONTEXT HANDOFF FROM $src_engine ===
+\`\`\`
+$(tail -n 80 "$dump_file" 2>/dev/null)
+\`\`\`
+=== INSTRUCTION FOR $dst_engine ===
+$instruction"
+
+        agent_id="pipe_${src_engine}_to_${dst_engine}_$(date +%s)_$RANDOM"
+        zellij action new-pane --direction right --name "󱚤 $dst_engine (from $src_engine)" -- "$RUNNER" "$agent_id" "$dst_engine" "normal" "$prompt_payload"
+        rm -f "$dump_file"
+        ;;
+
+    tell)
+        if [ "$#" -lt 1 ]; then
+            echo "Usage: zmux tell <message...>"
+            exit 1
+        fi
+        message="$*"
+        zellij action write-chars "$message\n"
+        ;;
+
+    broadcast)
+        if [ "$#" -lt 1 ]; then
+            echo "Usage: zmux broadcast <message...>"
+            exit 1
+        fi
+        message="$*"
+        zellij action write-chars "$message\n"
+        ;;
+
+    dump|fix|explain)
+        parse_engine_and_prompt "$@"
+        dump_file="/tmp/zellij_screen_dump_$$.txt"
+        zellij action dump-screen "$dump_file"
+        sleep 0.1
+
+        instruction="${PROMPT:-Analyze the terminal output above and diagnose or fix any errors.}"
+        prompt_content="Here is the terminal output captured from the active pane:
+\`\`\`
+$(tail -n 80 "$dump_file" 2>/dev/null)
+\`\`\`
+
+$instruction"
+
+        agent_id="dump_${ENGINE}_$(date +%s)_$RANDOM"
+        zellij action new-pane --floating --width 80% --height 82% --x 10% --y 9% --name "󱚤 $ENGINE Diagnosis" -- "$RUNNER" "$agent_id" "$ENGINE" "normal" "$prompt_content"
+        rm -f "$dump_file"
+        ;;
+
+    opencode)
+        agent_id="float_opencode_$(date +%s)_$RANDOM"
+        zellij action new-pane --floating --width 78% --height 80% --x 11% --y 10% --name "󰚩 opencode Sidecar" -- "$RUNNER" "$agent_id" "opencode" "normal" "$@"
+        ;;
+
+    codex)
+        agent_id="float_codex_$(date +%s)_$RANDOM"
+        zellij action new-pane --floating --width 78% --height 80% --x 11% --y 10% --name "󰘦 codex Sidecar" -- "$RUNNER" "$agent_id" "codex" "normal" "$@"
+        ;;
+
+    agy)
+        agent_id="float_agy_$(date +%s)_$RANDOM"
+        zellij action new-pane --floating --width 78% --height 80% --x 11% --y 10% --name "󱚤 agy Sidecar" -- "$RUNNER" "$agent_id" "agy" "normal" "$@"
+        ;;
+
+    swarm)
+        if [ "$#" -eq 0 ]; then
+            echo "Usage: zmux swarm <engine:task1> <engine:task2> ..."
+            echo "Example: zmux swarm opencode:\"Refactor API\" codex:\"Write unit tests\" agy:\"Audit architecture\""
+            exit 1
+        fi
+
+        for item in "$@"; do
+            [ -z "$item" ] && continue
+            if [[ "$item" =~ ^([a-zA-Z0-9_-]+):(.*)$ ]]; then
+                engine="${BASH_REMATCH[1]}"
+                task="${BASH_REMATCH[2]}"
+            else
+                engine="$DEFAULT_ENGINE"
+                task="$item"
+            fi
+
+            agent_id="swarm_${engine}_$(date +%s)_$RANDOM"
+            label="$engine: $(echo "$task" | cut -c1-12)..."
+            zellij action new-pane --stacked --name "󱚤 $label" -- "$RUNNER" "$agent_id" "$engine" "normal" "$task"
+            sleep 0.1
+        done
+        ;;
+
+    arena)
+        e1="${1:-opencode}"
+        e2="${2:-codex}"
+        e3="${3:-agy}"
+        tab_name="󱚤 AI Arena ($e1 vs $e2 vs $e3)"
+
+        zellij action new-tab --name "$tab_name"
+        sleep 0.1
+        zellij action rename-pane "󰚩 $e1"
+        zellij action write-chars "$RUNNER arena_1 $e1 normal\n"
+        zellij action new-pane --direction right --name "󰘦 $e2" -- "$RUNNER" "arena_2" "$e2" "normal"
+        zellij action new-pane --direction right --name "󱚤 $e3" -- "$RUNNER" "arena_3" "$e3" "normal"
+        ;;
+
+    tab)
+        parse_engine_and_prompt "$@"
+        icon="󱚤"
+        [ "$ENGINE" == "opencode" ] && icon="󰚩"
+        [ "$ENGINE" == "codex" ] && icon="󰩏"
+
+        agent_id="tab_${ENGINE}_$(date +%s)_$RANDOM"
+        zellij action new-tab --name "$icon $ENGINE 󰏤" -- "$RUNNER" "$agent_id" "$ENGINE" "normal" $PROMPT
+        ;;
+
+    fork-tab)
+        parse_engine_and_prompt "$@"
+        icon="󱚤"
+        [ "$ENGINE" == "opencode" ] && icon="󰚩"
+        [ "$ENGINE" == "codex" ] && icon="󰩏"
+
+        agent_id="fork_tab_${ENGINE}_$(date +%s)_$RANDOM"
+        zellij action new-tab --name "$icon $ENGINE (fork) 󰏤" -- "$RUNNER" "$agent_id" "$ENGINE" "fork"
+        ;;
+
+    bring|pull|dock)
+        parse_engine_and_prompt "$@"
+        target_engine="$ENGINE"
+
+        if [ "$#" -eq 0 ] || ! is_known_engine "$1"; then
+            collect_agents
+            count=${#AGENT_LIST[@]}
+            if [ "$count" -eq 1 ]; then
+                IFS='|' read -r _ target_engine _ _ _ _ _ _ <<< "${AGENT_LIST[0]}"
+            fi
+        fi
+
+        icon="󱚤"
+        [ "$target_engine" == "opencode" ] && icon="󰚩"
+        [ "$target_engine" == "codex" ] && icon="󰩏"
+
+        agent_id="dock_${target_engine}_$(date +%s)_$RANDOM"
+        zellij action new-pane --direction right --name "$icon $target_engine (docked)" -- "$RUNNER" "$agent_id" "$target_engine" "normal" $PROMPT
+        ;;
+
+    promote|break)
+        # Promotes the focused pane into its own tab
+        zellij action break-pane 2>/dev/null || true
+        ;;
+
+    emit)
+        state="${1:-working}"
+        engine="${2:-$DEFAULT_ENGINE}"
+        msg="${3:-$state}"
+        target_tab_id="${4:-}"
+        target_pane_id="${5:-}"
+        pid="${6:-$$}"
+        shift 6 2>/dev/null || shift 5 2>/dev/null || shift 4 2>/dev/null || shift 3 2>/dev/null || true
+
+        if [ -z "$target_tab_id" ]; then
+            target_tab_id="${ZELLIJ_TAB_ID:-$(zellij action current-tab-info 2>/dev/null | grep '^id:' | awk '{print $2}')}"
+        fi
+        if [ -z "$target_pane_id" ]; then
+            target_pane_id="${ZELLIJ_PANE_ID:-default}"
+        fi
+
+        mkdir -p "$AGENT_DIR"
+        current_sess="${ZELLIJ_SESSION_NAME:-}"
+        if [ -z "$current_sess" ]; then
+            current_sess=$(zellij action query-session-name 2>/dev/null || true)
+        fi
+        cat <<EOF > "$AGENT_DIR/event_pane_${target_pane_id}.json"
+{
+  "pane_id": "$target_pane_id",
+  "tab_id": "${target_tab_id:-}",
+  "engine": "$engine",
+  "state": "$state",
+  "message": "$msg",
+  "pid": $pid,
+  "session": "${current_sess:-main}",
+  "time": $(date +%s)
+}
+EOF
+
+        icon="󱚤"
+        eng_color="#cba6f7"
+        case "$engine" in
+            opencode)
+                icon="󰚩"
+                eng_color="#f2cdcd"
+                ;;
+            codex)
+                icon="󰩏"
+                eng_color="#89dceb"
+                ;;
+            agy|antigravity)
+                icon="󱚤"
+                eng_color="#cba6f7"
+                ;;
+        esac
+
+        symbol="󰄬"
+        state_color="#a6e3a1"
+        if [ "$state" == "working" ]; then
+            symbol="󱑋"
+            state_color="#f9e2af"
+        elif [ "$state" == "needs_input" ]; then
+            symbol="󰏤"
+            state_color="#fab387"
+        fi
+
+        if [ -n "$target_tab_id" ]; then
+            tab_title=$(build_tab_title "$target_tab_id" "$engine" "$target_pane_id")
+            zellij action rename-tab -t "$target_tab_id" "$tab_title" 2>/dev/null || true
+        fi
+        ;;
+
+    sync-tab|tab-sync)
+        target_tab_id="${1:-$ZELLIJ_TAB_ID}"
+        if [ -z "$target_tab_id" ]; then
+            target_tab_id=$(zellij action current-tab-info 2>/dev/null | grep '^id:' | awk '{print $2}')
+        fi
+        if [ -n "$target_tab_id" ]; then
+            tab_title=$(build_tab_title "$target_tab_id")
+            zellij action rename-tab -t "$target_tab_id" "$tab_title" 2>/dev/null || true
+        fi
+        ;;
+
+    engines|list-engines)
+        echo "=== Installed AI Agent Engines ==="
+        check_engine() {
+            local name="$1"
+            local bin="$2"
+            local ver_cmd="$3"
+            if command -v "$bin" >/dev/null 2>&1; then
+                local ver
+                ver=$(eval "$ver_cmd" 2>&1 | head -n 1)
+                printf "  \033[32m✔\033[0m %-10s -> %-35s (%s)\n" "$name" "$(which "$bin")" "$ver"
+            else
+                printf "  \033[31m✘\033[0m %-10s -> not found\n" "$name"
+            fi
+        }
+        check_engine "opencode" "opencode" "opencode --version"
+        check_engine "codex" "codex" "codex --version"
+        check_engine "agy" "agy" "agy --version"
+        ;;
+
+    kill-all)
+        echo "Terminating active agents..."
+        kill_all_agents
+        echo "All agent sessions stopped."
+        ;;
+
+    help|--help|-h)
+        show_help
+        ;;
+
+    *)
+        echo "Unknown command: $cmd"
+        show_help
+        exit 1
+        ;;
+esac

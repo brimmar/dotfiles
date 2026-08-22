@@ -81,6 +81,7 @@ completions=(
 # Add wisely, as too many aliases slow down shell startup.
 aliases=(
   general
+  ytdl
 )
 
 # Which plugins would you like to load? (plugins can be found in ~/.oh-my-bash/plugins/*)
@@ -107,12 +108,57 @@ export LANG=pt_BR.UTF-8
 export PATH="$HOME/bin:$PATH"
 export PATH="$HOME/.local/bin:$PATH"
 
+# export PATH=/usr/local/cuda-13.0/bin${PATH:+:${PATH}}
+# export LD_LIBRARY_PATH=/usr/local/cuda-13.0/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
+export PATH=/usr/local/cuda-12.8/bin${PATH:+:${PATH}}
+export LD_LIBRARY_PATH=/usr/local/cuda-12.8/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
+
 # Preferred editor for local and remote sessions
 if [[ -n $SSH_CONNECTION ]]; then
   export EDITOR='nvim'
 else
   export EDITOR='vim'
 fi
+
+uv_use() {
+  local ver="${1:-3.11}"
+  local pybin
+  pybin="$(uv python list 2>/dev/null | grep "cpython-${ver}" | head -1 | awk '{print $NF}')"
+  if [[ -z "$pybin" || "$pybin" == *"<download available>"* ]]; then
+    echo "Installing Python ${ver}..."
+    uv python install "$ver"
+    pybin="$(uv python list 2>/dev/null | grep "cpython-${ver}" | head -1 | awk '{print $NF}')"
+  fi
+  export PATH="${pybin%/*}:$PATH"
+  echo "Using $(python3 --version) from ${pybin%/*}"
+}
+
+zstack() {
+  if [ "$#" -lt 2 ]; then
+    echo "Usage: zstack <search_term> \"<command_to_run>\""
+    echo "Example: zstack api \"nvim .\""
+    return 1
+  fi
+
+  local search_term="$1"
+  local command_to_run="$2"
+  local PANE_IDS_FILE="/tmp/zellij_pane_ids_$$"
+
+  touch "$PANE_IDS_FILE"
+
+  find . -mindepth 1 -maxdepth 1 -type d -name "*${search_term}*" -print0 | xargs -0 -I {} \
+    zellij action new-pane --cwd {} -- bash -c "echo \$ZELLIJ_PANE_ID >> '$PANE_IDS_FILE' && exec ${command_to_run}"
+
+  sleep 0.2
+
+  local pane_count
+  pane_count=$(wc -l < "$PANE_IDS_FILE")
+  if [ "$pane_count" -gt 1 ]; then
+    zellij action stack-panes -- $(tr '\n' ' ' < "$PANE_IDS_FILE")
+  fi
+
+  rm "$PANE_IDS_FILE"
+}
 
 delete_branches() {
 	deleted_branches=$(git branch -l | awk '/^[*]/{print $2} !/^[*]/{print $1}')
@@ -133,102 +179,16 @@ _gf() {
 }
 
 google() {
-    local script_name="google"
-    echo ""
-
-    if [[ -z "$LOCAL_GEMINI_API_KEY" ]]; then
-        echo "[$script_name] > ERROR: GEMINI_API_KEY environment variable not set." >&2
-        return 1
-    fi
-
-    if ! command -v jq &> /dev/null; then
-        echo "[$script_name] > ERROR: jq is not installed. Please install it to proceed." >&2
-        return 1
-    fi
-
-    local model="gemini-2.5-flash-lite"
-    local query_string=""
-
-    case "$1" in
-        --pro)
-            model="gemini-2.5-pro"
-            shift
-            ;;
-        --flash)
-            model="gemini-2.5-flash"
-            shift
-            ;;
-        *)
-            ;;
-    esac
-
     if [[ $# -eq 0 ]]; then
-        echo "[$script_name] > ERROR: No query provided." >&2
-        echo "Usage: google [--pro | --flash] \"<your query>\"" >&2
+        echo "Usage: google \"<your question>\"" >&2
         return 1
     fi
-
-    query_string="$@"
-
-    local api_url="https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?key=${LOCAL_GEMINI_API_KEY}&alt=sse"
-
-    local json_payload
-    json_payload=$(cat <<EOF
-{
-  "contents": [{
-    "parts": [{
-      "text": "You are a world-class AI research assistant designed to simulate high-quality web research and deliver fast, trusted answers like Perplexity AI.
-
-When I ask a question:
-
-• Simulate researching multiple top-tier sources — including scientific journals, government sites, reputable media, and expert blogs.
-
-• Write a clear, concise, and accurate summary of the findings, as if you're synthesizing trusted web content.
-
-• Avoid jargon; aim for clarity and brevity, especially on complex topics.
-
-• Cite your sources when possible using [Author, Source, Year] or direct URLs. If no credible source is available, say “Source unavailable.”
-
-• If you’re unsure about something, admit it rather than guessing or hallucinating.
-
-• Present your output in the following format:
-
-Summary:
-
-A well-structured explanation that gets to the point.
-
-Citations:
-
-• [Source Name, Year]
-• [Direct link if appropriate]
-
-Always be precise, neutral in tone, and prepared for follow-up questions based on prior context. Query: ${query_string}"
-    }]
-  }],
-  "tools": [{
-    "google_search": {}
-  }]
-}
-EOF
-)
-    curl --fail --silent --location -N -X POST \
-      -H "Content-Type: application/json" \
-      -d "${json_payload}" \
-      "${api_url}" | \
-    while read -r line; do
-        if [[ $line == "data: "* ]]; then
-            local json_chunk="${line#data: }"
-            
-            local text_chunk
-            text_chunk=$(echo "$json_chunk" | jq -r '.candidates[0].content.parts[0].text // ""')
-            printf "%s" "$text_chunk"
-        fi
-    done
-
-    echo ""
-    echo ""
-    
-    return 0
+    local tmp
+    tmp=$(mktemp)
+    opencode run --format json --command google "$*" 2>/dev/null | \
+      tee "$tmp" | jq -r 'select(.type == "text") | .part.text'
+    opencode session delete "$(head -1 "$tmp" | jq -r '.sessionID')" 2>/dev/null
+    rm -f "$tmp"
 }
 
 # Compilation flags
@@ -274,8 +234,7 @@ alias php-version='_php-version() { sudo update-alternatives --set php /usr/bin/
 # Comando pro laravel sail
 alias sail='[ -f sail ] && sh sail || sh vendor/bin/sail'
 
-# ADB Android
-alias adb='sudo $HOME/Android/Sdk/platform-tools/adb'
+
 
 # Rust Cargo
 . "$HOME/.cargo/env"
@@ -295,11 +254,22 @@ export PATH=$BUN_INSTALL/bin:$PATH
 # go
 export PATH=$PATH:/usr/local/go/bin
 
-# flutter
-export PATH=$PATH:/usr/bin/flutter/bin
+
 
 # zellij auto-start
-eval "$(zellij setup --generate-auto-start bash)"
+# Optimized for auto-attach: always attach to 'main' or create it.
+zellij_auto_start() {
+  # Prevent nesting inside existing Zellij, Neovim terminal, or IDE integrated terminals
+  if [ -z "$ZELLIJ" ] && [ -z "$NVIM" ] && [ "$TERM_PROGRAM" != "vscode" ]; then
+    if [[ $- == *i* ]]; then
+      # Attach to 'main' session, or create it if it doesn't exist (-c).
+      zellij attach -c main
+    fi
+  fi
+}
+
+# Execute the function to start Zellij on terminal launch
+zellij_auto_start
 
 #
 # Installation:
@@ -314,52 +284,310 @@ eval "$(zellij setup --generate-auto-start bash)"
 #
 #    /usr/local/etc/bash_completion.d/
 
-###-begin-flutter-completion-###
 
-if type complete &>/dev/null; then
-  __flutter_completion() {
-    local si="$IFS"
-    IFS=$'\n' COMPREPLY=($(COMP_CWORD="$COMP_CWORD" \
-                           COMP_LINE="$COMP_LINE" \
-                           COMP_POINT="$COMP_POINT" \
-                           flutter completion -- "${COMP_WORDS[@]}" \
-                           2>/dev/null)) || return $?
-    IFS="$si"
-  }
-  complete -F __flutter_completion flutter
-elif type compdef &>/dev/null; then
-  __flutter_completion() {
-    si=$IFS
-    compadd -- $(COMP_CWORD=$((CURRENT-1)) \
-                 COMP_LINE=$BUFFER \
-                 COMP_POINT=0 \
-                 flutter completion -- "${words[@]}" \
-                 2>/dev/null)
-    IFS=$si
-  }
-  compdef __flutter_completion flutter
-elif type compctl &>/dev/null; then
-  __flutter_completion() {
-    local cword line point words si
-    read -Ac words
-    read -cn cword
-    let cword-=1
-    read -l line
-    read -ln point
-    si="$IFS"
-    IFS=$'\n' reply=($(COMP_CWORD="$cword" \
-                       COMP_LINE="$line" \
-                       COMP_POINT="$point" \
-                       flutter completion -- "${words[@]}" \
-                       2>/dev/null)) || return $?
-    IFS="$si"
-  }
-  compctl -K __flutter_completion flutter
-fi
-
-###-end-flutter-completion-###
-
-## Generated 2024-06-08 14:32:59.443088Z
-## By /usr/bin/flutter/bin/cache/flutter_tools.snapshot
-export PATH="$PATH":"$HOME/.pub-cache/bin"
 export PATH="$HOME/zig-linux-x86_64-0.13.0:$PATH"
+
+# opencode
+export PATH=/home/brimmar/.opencode/bin:$PATH
+
+
+# Added by Antigravity CLI installer
+export PATH="/home/brimmar/.local/bin:$PATH"
+
+# >>> grok installer >>>
+export PATH="$HOME/.grok/bin:$PATH"
+[[ -r "$HOME/.grok/completions/bash/grok.bash" ]] && source "$HOME/.grok/completions/bash/grok.bash"
+# <<< grok installer <<<
+
+# Vite+ bin (https://viteplus.dev)
+. "$HOME/.vite-plus/env"
+
+# -------------------------------------------------------------------
+# VM management (VirtualBox + CIFS mounts)
+# -------------------------------------------------------------------
+_VM_CONFIG="$HOME/.vmconfig"
+_VM_CIFS_OPTS="username=brimmar,password=password,uid=1000,gid=1000,file_mode=0777,dir_mode=0777"
+
+_vm_load_config() {
+  if [[ ! -f "$_VM_CONFIG" ]]; then
+    cat > "$_VM_CONFIG" <<-EOF
+			# name mount_point share_path
+			Demo        $HOME/demo          //192.168.56.105/html
+			ProspectChat $HOME/prospectchat //192.168.56.101/html
+			Catacliente $HOME/catacliente   //192.168.56.104/html
+			LeadSearch  $HOME/leadsearch    //192.168.56.108/html
+			EOF
+  fi
+}
+
+_vm_all() {
+  _vm_load_config
+  awk '!/^#/ && NF>=3 {print $1}' "$_VM_CONFIG"
+}
+
+_vm_info() {
+  local vm_name="$1"
+  _vm_load_config
+  awk -v name="$vm_name" '!/^#/ && $1==name {print $2, $3}' "$_VM_CONFIG"
+}
+
+_vm_mount() {
+  local vm_name="$1"
+  local info
+  info="$(_vm_info "$vm_name")"
+  local mount_point="${info%% *}"
+  local share="${info#* }"
+  [[ -z "$mount_point" || -z "$share" ]] && { echo "  $vm_name: not found in config"; return 1; }
+  mkdir -p "$mount_point"
+  if mountpoint -q "$mount_point" 2>/dev/null; then
+    echo "  $vm_name: already mounted at $mount_point, skipping"
+    return 0
+  fi
+
+  local ip="${share#//}"; ip="${ip%%/*}"
+  echo "  $vm_name: waiting for $ip to be reachable..."
+  local attempt=0
+  until ping -c1 -W1 "$ip" &>/dev/null; do
+    sleep 2
+    ((attempt++))
+    if [[ $attempt -ge 30 ]]; then
+      echo "  $vm_name: $ip not reachable after 60s, skipping mount"
+      return 1
+    fi
+  done
+  echo "  $vm_name: $ip is up, waiting a moment for services..."
+  sleep 3
+
+  echo "  mounting $share -> $mount_point"
+  sudo mount -t cifs -o "$_VM_CIFS_OPTS" "$share" "$mount_point"
+}
+
+_vm_unmount() {
+  local vm_name="$1"
+  local info
+  info="$(_vm_info "$vm_name")"
+  local mount_point="${info%% *}"
+  [[ -z "$mount_point" ]] && { echo "  $vm_name: not found in config"; return 1; }
+  if mountpoint -q "$mount_point" 2>/dev/null; then
+    echo "  unmounting $mount_point..."
+    sudo umount "$mount_point"
+    rmdir "$mount_point" 2>/dev/null && echo "  removed $mount_point"
+  else
+    echo "  $vm_name: $mount_point not mounted, skipping"
+    rmdir "$mount_point" 2>/dev/null && echo "  removed $mount_point"
+  fi
+}
+
+_vm_resolve_names() {
+  local names=("$@")
+  local all=($(_vm_all))
+  if [[ ${#names[@]} -eq 0 ]]; then
+    printf '%s\n' "${all[@]}"
+    return
+  fi
+  for name in "${names[@]}"; do
+    local found=0
+    for v in "${all[@]}"; do
+      if [[ "${v,,}" == "${name,,}" ]]; then
+        echo "$v"
+        found=1
+        break
+      fi
+    done
+    if [[ $found -eq 0 ]]; then
+      echo "  unknown VM: $name" >&2
+    fi
+  done
+}
+
+vm() {
+  _vm_load_config
+  local cmd="${1:-help}"
+  shift 2>/dev/null || true
+  local all=($(_vm_all))
+  case "$cmd" in
+    start|up)
+      echo "starting VMs..."
+      while IFS= read -r v; do
+        [[ -z "$v" ]] && continue
+        echo "  $v: starting..."
+        VBoxManage startvm "$v" --type headless
+        _vm_mount "$v"
+      done < <(_vm_resolve_names "$@")
+      ;;
+    stop|down)
+      echo "stopping VMs..."
+      local running=()
+      while IFS= read -r v; do
+        [[ -z "$v" ]] && continue
+        _vm_unmount "$v"
+        local state
+        state=$(VBoxManage showvminfo "$v" --machinereadable 2>/dev/null | grep '^VMState=' | cut -d= -f2 | tr -d '"')
+        if [[ "$state" == "running" ]]; then
+          echo "  $v: shutting down..."
+          running+=("$v")
+          VBoxManage controlvm "$v" acpipowerbutton
+        else
+          echo "  $v: already off, skipping shutdown"
+        fi
+      done < <(_vm_resolve_names "$@")
+      if [[ ${#running[@]} -gt 0 ]]; then
+        echo "waiting for VMs to shut down..."
+        sleep 10
+      fi
+      ;;
+    mount)
+      while IFS= read -r v; do
+        [[ -z "$v" ]] && continue
+        _vm_mount "$v"
+      done < <(_vm_resolve_names "$@")
+      ;;
+    unmount)
+      while IFS= read -r v; do
+        [[ -z "$v" ]] && continue
+        _vm_unmount "$v"
+      done < <(_vm_resolve_names "$@")
+      ;;
+    status|ps|list)
+      for v in "${all[@]}"; do
+        local state
+        state=$(VBoxManage showvminfo "$v" --machinereadable 2>/dev/null | grep '^VMState=' | cut -d= -f2)
+        state="${state:-unknown}"
+        local info
+        info="$(_vm_info "$v")"
+        local mnt="${info%% *}"
+        local mnt_status
+        mountpoint -q "$mnt" 2>/dev/null && mnt_status="mounted" || mnt_status="unmounted"
+        printf "  %-15s %-12s %s\n" "$v" "[$state]" "($mnt_status)"
+      done
+      ;;
+    add)
+      local name="$1" mnt="$2" share="$3"
+      if [[ -z "$name" || -z "$mnt" || -z "$share" ]]; then
+        echo "usage: vm add <name> <mount_point> <share_path>"
+        echo "  vm add ParedeViva ~/paredeviva //192.168.56.110/html"
+        return 1
+      fi
+      echo "$name  $mnt  $share" >> "$_VM_CONFIG"
+      echo "added $name to $_VM_CONFIG"
+      ;;
+    remove|rm)
+      local name="$1"
+      [[ -z "$name" ]] && { echo "usage: vm remove <name>"; return 1; }
+      sed -i "/^$name[[:space:]]/d" "$_VM_CONFIG"
+      echo "removed $name from $_VM_CONFIG"
+      ;;
+    edit)
+      v "$_VM_CONFIG"
+      ;;
+    help|*)
+      echo "usage: vm <command> [args]"
+      echo ""
+      echo "commands:"
+      echo "  start|up [vm...]   Start VM(s) and mount shares"
+      echo "  stop|down [vm...]  Shut down VM(s) and unmount shares"
+      echo "  mount [vm...]      Mount shares"
+      echo "  unmount [vm...]    Unmount shares"
+      echo "  status|ps|list     Show status of all VMs"
+      echo "  add <n> <mnt> <s>  Add a VM to the config"
+      echo "  remove|rm <name>   Remove a VM from the config"
+      echo "  edit               Edit config file with vim"
+      echo ""
+      echo "available VMs: ${all[*]}"
+      echo ""
+      echo "examples:"
+      echo "  vm start                    Start all VMs"
+      echo "  vm start demo               Start Demo only"
+      echo "  vm stop                     Stop all + unmount"
+      echo "  vm add ParedeViva ~/pv //host/pv  Add new VM"
+      echo "  vm edit                     Edit ~/.vmconfig"
+      ;;
+  esac
+}
+
+_vm_complete() {
+  local cur="${COMP_WORDS[COMP_CWORD]}"
+  local prev="${COMP_WORDS[COMP_CWORD-1]}"
+  local all=($(_vm_all))
+  local cmd=""
+  local i
+  for ((i=1; i<COMP_CWORD; i++)); do
+    local w="${COMP_WORDS[i]}"
+    if [[ "$w" =~ ^(start|up|stop|down|mount|unmount|remove|rm)$ ]]; then
+      cmd="$w"
+    fi
+  done
+  if [[ "$prev" == "vm" ]]; then
+    mapfile -t COMPREPLY < <(compgen -W "start stop mount unmount status list ps add remove rm edit help ${all[*]}" -- "$cur")
+  elif [[ "$prev" == "add" ]]; then
+    :
+  elif [[ "$cmd" == "remove" || "$cmd" == "rm" || "$cmd" == "start" || "$cmd" == "up" || "$cmd" == "stop" || "$cmd" == "down" || "$cmd" == "mount" || "$cmd" == "unmount" ]]; then
+    mapfile -t COMPREPLY < <(compgen -W "${all[*]}" -- "$cur")
+  fi
+}
+complete -F _vm_complete vm
+
+# zmux: AI Agent Zellij Shell Integration (Instant tab and status updates)
+if [ -n "$ZELLIJ" ]; then
+    if [ -z "$ZELLIJ_TAB_ID" ]; then
+        export ZELLIJ_TAB_ID=$(zellij action current-tab-info 2>/dev/null | grep '^id:' | awk '{print $2}')
+    fi
+
+    _zmux_prompt_hook() {
+        if [ -n "$ZELLIJ_PANE_ID" ] && [ "$_ZMUX_AGENT_ACTIVE" == "1" ]; then
+            _ZMUX_AGENT_ACTIVE=0
+            rm -f "/tmp/zellij_agents/event_pane_${ZELLIJ_PANE_ID}.json"
+            zmux sync-tab "${ZELLIJ_TAB_ID:-0}" 2>/dev/null || true
+            echo "zjstatus::pipe::agent_status::" | zellij action pipe 2>/dev/null || true
+        fi
+    }
+    PROMPT_COMMAND="_zmux_prompt_hook; ${PROMPT_COMMAND:-}"
+
+    agy() {
+        local tab_id="${ZELLIJ_TAB_ID:-$(zellij action current-tab-info 2>/dev/null | grep '^id:' | awk '{print $2}')}"
+        local pane_id="${ZELLIJ_PANE_ID:-0}"
+        export ZELLIJ_TAB_ID="$tab_id"
+        export _ZMUX_AGENT_ACTIVE=1
+        export _ZMUX_AGENT_ENGINE="agy"
+        zmux emit ready agy "Ready" "$tab_id" "$pane_id" "$$" 2>/dev/null || true
+        command agy "$@"
+        local code=$?
+        export _ZMUX_AGENT_ACTIVE=0
+        rm -f "/tmp/zellij_agents/event_pane_${pane_id}.json"
+        zmux sync-tab "$tab_id" 2>/dev/null || true
+        echo "zjstatus::pipe::agent_status::" | zellij action pipe 2>/dev/null || true
+        return $code
+    }
+
+    opencode() {
+        local tab_id="${ZELLIJ_TAB_ID:-$(zellij action current-tab-info 2>/dev/null | grep '^id:' | awk '{print $2}')}"
+        local pane_id="${ZELLIJ_PANE_ID:-0}"
+        export ZELLIJ_TAB_ID="$tab_id"
+        export _ZMUX_AGENT_ACTIVE=1
+        export _ZMUX_AGENT_ENGINE="opencode"
+        zmux emit ready opencode "Ready" "$tab_id" "$pane_id" "$$" 2>/dev/null || true
+        command opencode "$@"
+        local code=$?
+        export _ZMUX_AGENT_ACTIVE=0
+        rm -f "/tmp/zellij_agents/event_pane_${pane_id}.json"
+        zmux sync-tab "$tab_id" 2>/dev/null || true
+        echo "zjstatus::pipe::agent_status::" | zellij action pipe 2>/dev/null || true
+        return $code
+    }
+
+    codex() {
+        local tab_id="${ZELLIJ_TAB_ID:-$(zellij action current-tab-info 2>/dev/null | grep '^id:' | awk '{print $2}')}"
+        local pane_id="${ZELLIJ_PANE_ID:-0}"
+        export ZELLIJ_TAB_ID="$tab_id"
+        export _ZMUX_AGENT_ACTIVE=1
+        export _ZMUX_AGENT_ENGINE="codex"
+        zmux emit ready codex "Ready" "$tab_id" "$pane_id" "$$" 2>/dev/null || true
+        command codex "$@"
+        local code=$?
+        export _ZMUX_AGENT_ACTIVE=0
+        rm -f "/tmp/zellij_agents/event_pane_${pane_id}.json"
+        zmux sync-tab "$tab_id" 2>/dev/null || true
+        echo "zjstatus::pipe::agent_status::" | zellij action pipe 2>/dev/null || true
+        return $code
+    }
+fi

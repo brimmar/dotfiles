@@ -12,11 +12,11 @@ fi
 
 time_spec="$1"
 shift
-message="${*:-Time's up!}"
+message="${*:-Timer completed}"
 
 # This is our unique marker. The status script will look for this exact comment.
 marker_comment="#ZELLIJ_TIMER_MSG=${message}"
-notify_command="notify-send -u critical -i /usr/share/icons/gnome/32x32/actions/appointment-new.png 'Timer' '$message'"
+notify_command=$(printf 'notify-send -u critical -i /usr/share/icons/gnome/32x32/actions/appointment-new.png "Timer" %q' "$message")
 
 # Combine the marker and the command. The marker MUST come first for easy parsing.
 full_command=$(printf "%s\n%s" "$marker_comment" "$notify_command")

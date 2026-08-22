@@ -1,5 +1,5 @@
 return {
-	cmd = { "dockerfile-language-server", "--stdio" },
+	cmd = { "docker-langserver", "--stdio" },
 	filetypes = { "dockerfile" },
 	root_markers = { "Dockerfile", "docker-compose.yml", "docker-compose.yaml", ".git" },
 	single_file_support = true,

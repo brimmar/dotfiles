@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+# zellij-agent-status: 100% pure event-driven status reporter for zjstatus (0 process/PID dependencies)
+AGENT_DIR="/tmp/zellij_agents"
+
+[ ! -d "$AGENT_DIR" ] && exit 0
+
+active_instances=()
+
+for ev in "$AGENT_DIR"/event_pane_*.json; do
+    [ ! -f "$ev" ] && continue
+
+    content=$(< "$ev")
+    
+    pane_id=""
+    engine=""
+    state="ready"
+
+    if [[ $content =~ \"pane_id\":[[:space:]]*\"([^\"]+)\" ]]; then
+        pane_id="${BASH_REMATCH[1]}"
+    fi
+    if [[ $content =~ \"engine\":[[:space:]]*\"([^\"]+)\" ]]; then
+        engine="${BASH_REMATCH[1]}"
+    fi
+    if [[ $content =~ \"state\":[[:space:]]*\"([^\"]+)\" ]]; then
+        state="${BASH_REMATCH[1]}"
+    fi
+
+    [ -z "$engine" ] && continue
+    active_instances+=("$engine:$state:$pane_id")
+done
+
+count=${#active_instances[@]}
+[ "$count" -eq 0 ] && exit 0
+
+format_agent_badge() {
+    local entry="$1"
+    local engine="${entry%%:*}"
+    local rest="${entry#*:}"
+    local state="${rest%%:*}"
+
+    local icon="󱚤"
+    local eng_color="#cba6f7" # Mauve for AGY
+    case "$engine" in
+        opencode)
+            icon="󰚩"
+            eng_color="#f2cdcd" # Flamingo for OpenCode
+            ;;
+        codex)
+            icon="󰩏"
+            eng_color="#89dceb" # Sky Blue for Codex
+            ;;
+        agy|antigravity)
+            icon="󱚤"
+            eng_color="#cba6f7" # Mauve for AGY
+            ;;
+    esac
+
+    case "$state" in
+        working)
+            echo -n "#[fg=${eng_color},bold]▎${icon} ${engine} #[fg=#f9e2af,bold]󱑋 working#[default]"
+            ;;
+        needs_input)
+            echo -n "#[fg=${eng_color},bold]▎${icon} ${engine} #[fg=#fab387,bold]󰏤 input#[default]"
+            ;;
+        *)
+            echo -n "#[fg=${eng_color},bold]▎${icon} ${engine} #[fg=#a6e3a1,bold]󰄬 ready#[default]"
+            ;;
+    esac
+}
+
+if [ "$count" -eq 1 ]; then
+    format_agent_badge "${active_instances[0]}"
+    echo ""
+elif [ "$count" -eq 2 ]; then
+    format_agent_badge "${active_instances[0]}"
+    echo -n " #[fg=#585b70]│#[default] "
+    format_agent_badge "${active_instances[1]}"
+    echo ""
+elif [ "$count" -eq 3 ]; then
+    format_agent_badge "${active_instances[0]}"
+    echo -n " #[fg=#585b70]│#[default] "
+    format_agent_badge "${active_instances[1]}"
+    echo -n " #[fg=#585b70]│#[default] "
+    format_agent_badge "${active_instances[2]}"
+    echo ""
+else
+    working_count=0
+    input_count=0
+    ready_count=0
+    for it in "${active_instances[@]}"; do
+        rest="${it#*:}"
+        st="${rest%%:*}"
+        [ "$st" == "working" ] && working_count=$((working_count + 1))
+        [ "$st" == "needs_input" ] && input_count=$((input_count + 1))
+        [ "$st" != "working" ] && [ "$st" != "needs_input" ] && ready_count=$((ready_count + 1))
+    done
+    echo "#[fg=#f5c2e7,bold]▎󰗮 $count Swarm Agents (#[fg=#a6e3a1]${ready_count} 󰄬#[fg=#f5c2e7], #[fg=#f9e2af]${working_count} 󱑋#[fg=#f5c2e7], #[fg=#fab387]${input_count} 󰏤#[fg=#f5c2e7])#[default]"
+fi

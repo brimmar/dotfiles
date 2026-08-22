@@ -21,8 +21,6 @@ return {
 			ensure_installed = {
 				-- Other Tools
 				"stylua",
-				"phpstan",
-				"pint",
 
 				-- LSPs
 				"ansible-language-server",
@@ -36,7 +34,6 @@ return {
 				"html-lsp",
 				"json-lsp",
 				"lua-language-server",
-				"phpactor",
 				"rust-analyzer",
 				"svelte-language-server",
 				"tailwindcss-language-server",

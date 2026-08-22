@@ -1,0 +1,117 @@
+#!/usr/bin/env bash
+# zellij-agent-runner: Universal lifecycle tracking & event hook wrapper for agy, codex, and opencode in Zellij
+set -eo pipefail
+
+AGENT_DIR="/tmp/zellij_agents"
+mkdir -p "$AGENT_DIR"
+
+AGENT_ID="${1:-agent_$$}"
+AGENT_ENGINE="${2:-agy}"
+MODE="${3:-normal}"  # normal | fork | prompt
+shift 3 || true
+
+STATE_FILE="$AGENT_DIR/${AGENT_ID}.json"
+
+ENGINE_ICON="󱚤"
+ENGINE_COLOR="#cba6f7"
+case "$AGENT_ENGINE" in
+    opencode)
+        ENGINE_ICON="󰚩"
+        ENGINE_COLOR="#f2cdcd"
+        ;;
+    codex)
+        ENGINE_ICON="󰩏"
+        ENGINE_COLOR="#89dceb"
+        ;;
+    agy|antigravity)
+        ENGINE_ICON="󱚤"
+        ENGINE_COLOR="#cba6f7"
+        ;;
+esac
+
+# Capture the specific Tab ID where this agent runner was spawned
+TAB_ID=$(zellij action current-tab-info 2>/dev/null | grep '^id:' | awk '{print $2}')
+
+# Initial Tab naming with Ready state targeting only this tab ID
+if [ -n "$TAB_ID" ]; then
+    zellij action rename-tab -t "$TAB_ID" "$ENGINE_ICON $AGENT_ENGINE 󰄬" 2>/dev/null || true
+else
+    zellij action rename-tab "$ENGINE_ICON $AGENT_ENGINE 󰄬" 2>/dev/null || true
+fi
+
+cleanup() {
+    rm -f "$STATE_FILE"
+    rm -f "$AGENT_DIR/${AGENT_ENGINE}_event.json"
+    local dev_title="󰅩 Dev"
+    if [ -n "$TAB_ID" ]; then
+        local pos
+        pos=$(zellij action list-tabs 2>/dev/null | awk -v id="$TAB_ID" '$1==id {print $2}')
+        [ -n "$pos" ] && dev_title="󰅩 Dev #$((pos + 1))"
+        zellij action rename-tab -t "$TAB_ID" "$dev_title" 2>/dev/null || true
+    else
+        zellij action rename-tab "󰅩 Dev" 2>/dev/null || true
+    fi
+    echo "zjstatus::pipe::agent_status::" | zellij action pipe 2>/dev/null || true
+}
+trap cleanup EXIT INT TERM
+
+# Record agent start state
+task_escaped=$(printf '%s' "$*" | tr '\n' ' ' | sed 's/"/\\"/g')
+cat <<EOF > "$STATE_FILE"
+{
+  "id": "$AGENT_ID",
+  "engine": "$AGENT_ENGINE",
+  "mode": "$MODE",
+  "label": "$AGENT_ENGINE",
+  "pid": $$,
+  "tab_id": "${TAB_ID:-}",
+  "pane_id": "${ZELLIJ_PANE_ID:-unknown}",
+  "session": "${ZELLIJ_SESSION_NAME:-unknown}",
+  "cwd": "$PWD",
+  "task": "$task_escaped",
+  "state": "ready",
+  "status": "running",
+  "start_time": $(date +%s)
+}
+EOF
+
+# Execute the agent engine according to mode and arguments
+case "$AGENT_ENGINE" in
+    opencode)
+        if [ "$MODE" == "fork" ]; then
+            exec opencode --continue --fork
+        elif [ "$#" -gt 0 ]; then
+            exec opencode --prompt "$*"
+        else
+            exec opencode
+        fi
+        ;;
+
+    codex)
+        if [ "$MODE" == "fork" ]; then
+            exec codex fork --last
+        elif [ "$#" -gt 0 ]; then
+            exec codex "$*"
+        else
+            exec codex
+        fi
+        ;;
+
+    agy|antigravity)
+        if [ "$MODE" == "fork" ]; then
+            exec agy --continue
+        elif [ "$#" -gt 0 ]; then
+            exec agy --prompt-interactive "$*"
+        else
+            exec agy
+        fi
+        ;;
+
+    *)
+        if [ "$#" -gt 0 ]; then
+            exec "$AGENT_ENGINE" "$@"
+        else
+            exec "$AGENT_ENGINE"
+        fi
+        ;;
+esac

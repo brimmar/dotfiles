@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Ultra-fast pure-bash memory usage reading /proc/meminfo directly
+mem_total=0
+mem_avail=0
+
+while read -r key val _; do
+    case "$key" in
+        MemTotal:)     mem_total=$val ;;
+        MemAvailable:) mem_avail=$val ;;
+    esac
+    [ "$mem_total" -gt 0 ] && [ "$mem_avail" -gt 0 ] && break
+done < /proc/meminfo 2>/dev/null
+
+if [ "$mem_total" -gt 0 ]; then
+    used=$((mem_total - mem_avail))
+    echo "$(( (100 * used) / mem_total ))"
+else
+    echo "0"
+fi

@@ -1,15 +1,15 @@
 themes {
 	custom-default {
-		fg 1
-		bg 10
-		black 20
-		red 30
-		green "#313131"
-		yellow 50
-		blue 60
-		magenta 70
-		cyan 80
-		white 90
-		orange 254
+		fg 205 214 244
+		bg 24 24 37
+		black 17 17 27
+		red 243 139 168
+		green 166 227 161
+		yellow 249 226 175
+		blue 137 180 250
+		magenta 203 166 247
+		cyan 137 220 235
+		white 186 194 222
+		orange 250 179 135
  	}
 }

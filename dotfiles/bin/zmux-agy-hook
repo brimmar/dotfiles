@@ -1,0 +1,91 @@
+#!/usr/bin/env node
+// zmux-agy-hook: Native AGY lifecycle event hook handler for Zellij AI Orchestration
+import { spawnSync } from 'node:child_process';
+import * as fs from 'node:fs';
+
+const eventType = process.argv[2] || 'pre-invocation';
+const tabId = process.env.ZELLIJ_TAB_ID || '0';
+const paneId = process.env.ZELLIJ_PANE_ID || '0';
+
+function emit(state, message) {
+  const agentDir = '/tmp/zellij_agents';
+  try {
+    if (!fs.existsSync(agentDir)) fs.mkdirSync(agentDir, { recursive: true });
+    const payload = JSON.stringify({
+      pane_id: paneId,
+      tab_id: tabId,
+      engine: 'agy',
+      state: state,
+      message: message || state,
+      pid: process.pid,
+      time: Math.floor(Date.now() / 1000)
+    });
+    fs.writeFileSync(`${agentDir}/event_pane_${paneId}.json`, payload);
+  } catch (e) {}
+
+  if (process.env.ZELLIJ) {
+    const safeMsg = (message || state).replace(/"/g, '\\"');
+    const args = ['emit', state, 'agy', safeMsg, tabId, paneId, String(process.pid)];
+    try {
+      spawnSync('/home/brimmar/.local/bin/zmux', args, {
+        stdio: 'ignore'
+      });
+    } catch (e) {}
+  }
+}
+
+// Read stdin synchronously if piped
+let inputData = {};
+try {
+  if (!process.stdin.isTTY) {
+    const raw = fs.readFileSync(0, 'utf8');
+    if (raw && raw.trim()) {
+      inputData = JSON.parse(raw);
+    }
+  }
+} catch (e) {}
+
+switch (eventType) {
+  case 'pre-invocation':
+    // User sent a prompt / model starts thinking -> Working
+    emit('working', 'Thinking...');
+    process.stdout.write(JSON.stringify({}) + '\n');
+    break;
+
+  case 'pre-tool': {
+    const toolName = inputData.toolCall?.name || 'tool';
+    if (toolName === 'ask_question' || toolName === 'ask_permission') {
+      // Waiting specifically on user interaction
+      emit('needs_input', `Awaiting ${toolName}`);
+    } else {
+      // Normal tool execution -> Working
+      emit('working', `Tool: ${toolName}`);
+    }
+    process.stdout.write(JSON.stringify({ decision: 'allow' }) + '\n');
+    break;
+  }
+
+  case 'post-tool':
+    // Completed a tool -> Still working
+    emit('working', 'Processing...');
+    process.stdout.write(JSON.stringify({}) + '\n');
+    break;
+
+  case 'post-invocation':
+    // Single invocation step complete, still inside active turn loop -> Working
+    emit('working', 'Evaluating...');
+    process.stdout.write(JSON.stringify({ injectSteps: [] }) + '\n');
+    break;
+
+  case 'stop':
+    // Entire execution loop has completed and agent is idle awaiting user input -> Ready
+    emit('ready', 'Ready');
+    process.stdout.write(JSON.stringify({ decision: 'allow' }) + '\n');
+    break;
+
+  default:
+    process.stdout.write(JSON.stringify({}) + '\n');
+    break;
+}
+
+process.exit(0);

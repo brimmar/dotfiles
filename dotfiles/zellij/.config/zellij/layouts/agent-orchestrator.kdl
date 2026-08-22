@@ -62,5 +62,13 @@ layout {
 			datetime_locale "pt_BR"
 		}
 	}
-	pane
+	pane split_direction="vertical" {
+		pane size="65%" name="󰅩 Dev Terminal"
+		pane size="35%" split_direction="horizontal" {
+			pane name="󰚩 AI Orchestrator" command="/home/brimmar/.local/bin/zellij-agent-runner" {
+				args "orchestrator" "opencode" "normal"
+			}
+			pane name="󰗮 Worker / Logs" size="35%"
+		}
+	}
 }

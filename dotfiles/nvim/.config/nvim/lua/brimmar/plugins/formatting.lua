@@ -6,8 +6,8 @@ return {
 
 		conform.setup({
 			formatters_by_ft = {
-				javascript = { "biome" },
-				typescript = { "biome" },
+				-- javascript = { "biome" },
+				-- typescript = { "biome" },
 				svelte = { "biome" },
 				css = { "biome" },
 				html = { "biome" },
@@ -15,21 +15,13 @@ return {
 				yaml = { "biome" },
 				lua = { "stylua" },
 				blade = { "blade-formatter" },
-				php = { "pint" },
+				-- php = { "pint" },
 			},
 			format_on_save = {
-				lsp_fallback = true,
+				-- lsp_fallback = true,
 				async = false,
 				timeout_ms = 1000,
 			},
 		})
-
-		vim.keymap.set({ "n", "v" }, "<leader>mp", function()
-			conform.format({
-				lsp_fallback = true,
-				async = false,
-				timeout_ms = 500,
-			})
-		end, { desc = "Format file or range (in visual or normal mode)" })
 	end,
 }

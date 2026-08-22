@@ -6,7 +6,7 @@ local servers = {
 	"html",
 	"cssls",
 	"jsonls",
-	"phpactor",
+	"phpantom",
 	"svelte",
 	"yamlls",
 	"gopls",
