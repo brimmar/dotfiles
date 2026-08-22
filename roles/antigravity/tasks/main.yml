@@ -1,0 +1,25 @@
+- name: Install Antigravity (Google)
+  become_user: "{{ host_user }}"
+  block:
+    - name: Ensure antigravity apt keyring exists
+      become: true
+      get_url:
+        url: https://us-central1-apt.pkg.dev/doc/repo-signing-key.gpg
+        dest: /etc/apt/keyrings/antigravity-repo-key.gpg
+        mode: '0644'
+      ignore_errors: true
+
+    - name: Add Antigravity apt repository
+      become: true
+      apt_repository:
+        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/antigravity-repo-key.gpg] https://us-central1-apt.pkg.dev/projects/antigravity-auto-updater-dev/ antigravity-debian main"
+        state: present
+        filename: antigravity
+
+    - name: Install antigravity
+      become: true
+      apt:
+        name: antigravity
+        state: present
+        update_cache: yes
+      ignore_errors: true

@@ -1,0 +1,11 @@
+- name: Deploy psqlrc from vault
+  become_user: "{{ host_user }}"
+  block:
+    - name: Deploy .psqlrc from vault
+      copy:
+        content: "{{ vault_psqlrc }}"
+        dest: "/home/{{ host_user }}/.psqlrc"
+        mode: '0644'
+        owner: "{{ host_user }}"
+      when: vault_psqlrc is defined
+      no_log: false

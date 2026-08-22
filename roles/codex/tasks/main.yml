@@ -1,0 +1,11 @@
+- name: Install Codex (OpenAI) via npm
+  become_user: "{{ host_user }}"
+  block:
+    - name: Ensure nvm is sourced and install codex
+      shell: |
+        export NVM_DIR="$HOME/.nvm"
+        [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+        nvm use --lts || nvm use node || true
+        npm install -g @openai/codex
+      args:
+        executable: /bin/bash

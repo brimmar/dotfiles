@@ -1,0 +1,40 @@
+- name: Install ADB (keep only platform-tools, not full Android Studio)
+  become_user: "{{ host_user }}"
+  block:
+    - name: Ensure android-tools directory exists
+      file:
+        path: "/home/{{ host_user }}/.android-tools"
+        state: directory
+        mode: '0755'
+
+    - name: Check if adb already present
+      stat:
+        path: "/home/{{ host_user }}/.android-tools/platform-tools/adb"
+      register: adb_bin
+
+    - name: Download platform-tools
+      when: not adb_bin.stat.exists
+      get_url:
+        url: https://dl.google.com/android/repository/platform-tools-latest-linux.zip
+        dest: "/home/{{ host_user }}/.android-tools/platform-tools.zip"
+        mode: '0644'
+
+    - name: Unarchive platform-tools
+      when: not adb_bin.stat.exists
+      unarchive:
+        src: "/home/{{ host_user }}/.android-tools/platform-tools.zip"
+        dest: "/home/{{ host_user }}/.android-tools/"
+        remote_src: yes
+
+    - name: Ensure ~/.local/bin exists
+      file:
+        path: "/home/{{ host_user }}/.local/bin"
+        state: directory
+        mode: '0755'
+
+    - name: Symlink adb to ~/.local/bin
+      file:
+        src: "/home/{{ host_user }}/.android-tools/platform-tools/adb"
+        dest: "/home/{{ host_user }}/.local/bin/adb"
+        state: link
+        force: yes

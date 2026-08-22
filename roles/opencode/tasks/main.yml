@@ -1,0 +1,19 @@
+- name: Install opencode via official installer (no projetos clone required)
+  become_user: "{{ host_user }}"
+  block:
+    - name: Ensure ~/.local/bin exists
+      file:
+        path: "{{ ansible_user_dir }}/.local/bin"
+        state: directory
+        mode: '0755'
+
+    - name: Download opencode install script
+      get_url:
+        url: https://opencode.ai/install
+        dest: "/tmp/opencode-install.sh"
+        mode: '0755'
+
+    - name: Run opencode installer
+      shell: "bash /tmp/opencode-install.sh"
+      args:
+        creates: "{{ ansible_user_dir }}/.local/bin/opencode"

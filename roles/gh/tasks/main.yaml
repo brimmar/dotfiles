@@ -47,6 +47,18 @@
             name: "{{ gh_package_name }}"
             state: present
 
+    - name: Authenticate gh CLI with vault token
+      become_user: "{{ host_user }}"
+      shell: |
+        if ! gh auth status >/dev/null 2>&1; then
+          echo "{{ vault_environment_variables.GH_TOKEN }}" | gh auth login --with-token
+        fi
+      args:
+        executable: /bin/bash
+      when: vault_environment_variables is defined and vault_environment_variables.GH_TOKEN is defined and vault_environment_variables.GH_TOKEN | length > 0
+      no_log: true
+      ignore_errors: true
+
     - name: Log GitHub CLI installation success
       lineinfile:
         path: "{{ log_file }}"

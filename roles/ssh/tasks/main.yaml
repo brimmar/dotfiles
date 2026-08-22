@@ -25,3 +25,12 @@
         mode: '0644'
         owner: "{{ host_user }}"
       no_log: true  # Hide the key content in logs
+
+    - name: Deploy SSH config from vault
+      copy:
+        content: "{{ vault_ssh_config }}"
+        dest: "{{ ssh_dir }}/config"
+        mode: '0600'
+        owner: "{{ host_user }}"
+      no_log: false
+      when: vault_ssh_config is defined

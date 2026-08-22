@@ -68,16 +68,11 @@
     - { role: bat, tags: bat }
     - { role: brave, tags: brave }
     - { role: bun, tags: bun }
-    - { role: cron, tags: cron }
     - { role: delta, tags: delta }
-    - { role: discord, tags: discord }
     - { role: docker, tags: docker }
     - { role: fonts, tags: fonts }
     - { role: gh, tags: gh }
     - { role: gnome_tweaks, tags: gnome_tweaks }
-    - { role: go, tags: go }
-    - { role: gum, tags: gum }
-    - { role: musikcube, tags: musikcube }
     - { role: neovim, tags: neovim }
     - { role: node, tags: node }
     - { role: nvm, tags: nvm }
@@ -89,11 +84,8 @@
     - { role: python, tags: python }
     - { role: rust, tags: rust }
     - { role: rustup, tags: rustup }
-    - { role: flutter, tags: flutter }
     - { role: ssh, tags: ssh }
-    - { role: stremio, tags: stremio }
     - { role: syncthing, tags: syncthing }
-    - { role: telegram, tags: telegram }
     - { role: test_shell, tags: test_shell }
     - { role: users, tags: users }
     - { role: vlc, tags: vlc }
@@ -103,7 +95,12 @@
     - { role: git_config, tags: git_config }
     - { role: env_vars, tags: env_vars }
     - { role: dotfiles, tags: dotfiles }
-    - { role: zig, tags: zig }
+    - { role: php85, tags: php85 }
+    - { role: psqlrc, tags: psqlrc }
+    - { role: codex, tags: codex }
+    - { role: opencode, tags: opencode }
+    - { role: antigravity, tags: antigravity }
+    - { role: adb, tags: adb }
 
   post_tasks:
     - name: Log playbook completion
