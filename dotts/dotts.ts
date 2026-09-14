@@ -3,6 +3,7 @@ import {
   aiToolsRole,
   alacrittyRole,
   cliToolsRole,
+  cosmicRole,
   desktopRole,
   dockerRole,
   dotfilesRole,
@@ -10,6 +11,7 @@ import {
   languagesRole,
   packagesRole,
   systemRole,
+  uvRole,
   vaultRole,
   vpRole,
   zjstatusRole,
@@ -24,6 +26,7 @@ export default () => {
       systemRole({ unzip: pkgs.unzip });
       dockerRole({ user: hostUser });
       const vp = vpRole({ curl: pkgs.curl });
+      const uv = uvRole({ curl: pkgs.curl });
       const languages = languagesRole({
         curl: pkgs.curl,
         buildEssential: pkgs['build-essential'],
@@ -42,6 +45,7 @@ export default () => {
         rustup: languages.rustup,
       });
       fontsRole();
+      cosmicRole();
       desktopRole({ user: hostUser });
       aiToolsRole({ vp: vp.installNode, curl: pkgs.curl });
       dotfilesRole();

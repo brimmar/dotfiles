@@ -11,15 +11,6 @@ export function systemRole(props: SystemRoleProps = {}) {
     enabled: false,
   });
 
-  // GNOME / Pop screensaver settings (disable lock on idle)
-  const screensaver = script(
-    'gsettings set org.gnome.desktop.screensaver lock-enabled false && ' +
-      'gsettings set org.gnome.desktop.screensaver ubuntu-lock-on-suspend false && ' +
-      'gsettings set org.gnome.desktop.session idle-delay 0',
-    {
-      onlyIf: 'command -v gsettings >/dev/null 2>&1',
-    },
-  );
 
   // Android ADB Platform Tools
   const localBin = dir('~/.local/bin');
@@ -38,5 +29,5 @@ export function systemRole(props: SystemRoleProps = {}) {
     dependsOn: [adbUnarchive, localBin],
   });
 
-  return { bluetooth, screensaver, localBin, androidDir, adbZip, adbUnarchive, adbLink };
+  return { bluetooth, localBin, androidDir, adbZip, adbUnarchive, adbLink };
 }

@@ -34,7 +34,6 @@ export function languagesRole(props: LanguagesRoleProps = {}) {
 
   // Python
   const python = pkg('python3');
-  const pythonPip = pkg('python3-pip');
 
   // PHP 8.5 via Ondrej PPA
   const phpRepo = aptRepository('ondrej-php', {
@@ -53,5 +52,5 @@ export function languagesRole(props: LanguagesRoleProps = {}) {
     'php8.5-zip',
   ].map((name) => pkg(name, { dependsOn: [phpRepo] }));
 
-  return { rustup, bun, golang, python, pythonPip, phpRepo, phpPackages };
+  return { rustup, bun, golang, python, phpRepo, phpPackages };
 }

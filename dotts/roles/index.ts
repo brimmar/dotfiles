@@ -11,3 +11,5 @@ export * from './vault';
 export * from './alacritty';
 export * from './zjstatus';
 export * from './fonts';
+export * from './uv';
+export * from './cosmic';
