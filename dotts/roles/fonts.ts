@@ -4,7 +4,7 @@ export function fontsRole() {
   const repo = git('https://github.com/ryanoasis/nerd-fonts', {
     dest: '~/nerd-fonts',
     depth: 1,
-    sparse: ['bin/scripts', 'install.sh', 'patched-fonts/Hack'],
+    sparse: ['bin/scripts', 'patched-fonts/Hack'],
   });
 
   const installHack = script(
