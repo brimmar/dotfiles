@@ -1,6 +1,10 @@
-import { dir, link, remoteFile, script, service, unarchive } from 'dotts';
+import { dir, link, type ResourceHandle, remoteFile, script, service, unarchive } from 'dotts';
 
-export function systemRole() {
+export interface SystemRoleProps {
+  unzip?: ResourceHandle;
+}
+
+export function systemRole(props: SystemRoleProps = {}) {
   // Stop and disable bluetooth service
   const bluetooth = service('bluetooth', {
     state: 'stopped',
@@ -18,19 +22,21 @@ export function systemRole() {
   );
 
   // Android ADB Platform Tools
+  const localBin = dir('~/.local/bin');
   const androidDir = dir('~/.local/opt/android-tools');
   const adbZip = remoteFile('~/.local/opt/android-tools/platform-tools.zip', {
     url: 'https://dl.google.com/android/repository/platform-tools-latest-linux.zip',
     dependsOn: [androidDir],
   });
+  const unarchiveDepends = [adbZip, ...(props.unzip ? [props.unzip] : [])];
   const adbUnarchive = unarchive('platform-tools', {
     src: '~/.local/opt/android-tools/platform-tools.zip',
     dest: '~/.local/opt/android-tools',
-    dependsOn: [adbZip],
+    dependsOn: unarchiveDepends,
   });
   const adbLink = link('~/.local/bin/adb', '~/.local/opt/android-tools/platform-tools/adb', {
-    dependsOn: [adbUnarchive],
+    dependsOn: [adbUnarchive, localBin],
   });
 
-  return { bluetooth, screensaver, androidDir, adbZip, adbUnarchive, adbLink };
+  return { bluetooth, screensaver, localBin, androidDir, adbZip, adbUnarchive, adbLink };
 }

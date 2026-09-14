@@ -1,4 +1,4 @@
-import { pkg } from 'dotts';
+import { pkg, type ResourceHandle } from 'dotts';
 
 const SYSTEM_PACKAGES = [
   'build-essential',
@@ -19,6 +19,12 @@ const SYSTEM_PACKAGES = [
   'iproute2',
 ] as const;
 
-export function packagesRole() {
-  return SYSTEM_PACKAGES.map((name) => pkg(name));
+export type SystemPackageName = (typeof SYSTEM_PACKAGES)[number];
+
+export function packagesRole(): Record<SystemPackageName, ResourceHandle> {
+  const result = {} as Record<SystemPackageName, ResourceHandle>;
+  for (const name of SYSTEM_PACKAGES) {
+    result[name] = pkg(name);
+  }
+  return result;
 }

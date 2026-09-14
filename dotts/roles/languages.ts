@@ -1,14 +1,32 @@
-import { aptRepository, pkg, script } from 'dotts';
+import { aptRepository, pkg, type ResourceHandle, script } from 'dotts';
 
-export function languagesRole() {
+export interface LanguagesRoleProps {
+  curl?: ResourceHandle;
+  buildEssential?: ResourceHandle;
+  unzip?: ResourceHandle;
+}
+
+export function languagesRole(props: LanguagesRoleProps = {}) {
+  const rustDepends = [
+    ...(props.curl ? [props.curl] : []),
+    ...(props.buildEssential ? [props.buildEssential] : []),
+  ];
+
   // Rust toolchain
   const rustup = script("curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y", {
     unless: 'test -f ~/.cargo/bin/rustup',
+    dependsOn: rustDepends,
   });
+
+  const bunDepends = [
+    ...(props.curl ? [props.curl] : []),
+    ...(props.unzip ? [props.unzip] : []),
+  ];
 
   // Bun runtime
   const bun = script('curl -fsSL https://bun.sh/install | bash', {
     unless: 'test -f ~/.bun/bin/bun',
+    dependsOn: bunDepends,
   });
 
   // Go

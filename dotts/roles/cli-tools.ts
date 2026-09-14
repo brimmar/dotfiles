@@ -1,6 +1,12 @@
-import { aptRepository, dir, link, pkg, script } from 'dotts';
+import { aptRepository, dir, link, pkg, type ResourceHandle, script } from 'dotts';
 
-export function cliToolsRole() {
+export interface CliToolsRoleProps {
+  rustup?: ResourceHandle;
+  buildEssential?: ResourceHandle;
+  libsslDev?: ResourceHandle;
+}
+
+export function cliToolsRole(props: CliToolsRoleProps = {}) {
   const localBin = dir('~/.local/bin');
 
   // Terminal & Editor
@@ -22,14 +28,22 @@ export function cliToolsRole() {
   });
   const ghPkg = pkg('gh', { dependsOn: [ghRepo] });
 
+  const cargoDepends = [
+    ...(props.rustup ? [props.rustup] : []),
+    ...(props.buildEssential ? [props.buildEssential] : []),
+    ...(props.libsslDev ? [props.libsslDev] : []),
+  ];
+
   // Delta via cargo
   const delta = script('~/.cargo/bin/cargo install git-delta', {
     unless: 'command -v delta >/dev/null 2>&1 || test -f ~/.cargo/bin/delta',
+    dependsOn: cargoDepends,
   });
 
   // Zellij terminal multiplexer
   const zellij = script('~/.cargo/bin/cargo install --locked zellij', {
     unless: 'command -v zellij >/dev/null 2>&1 || test -f ~/.cargo/bin/zellij',
+    dependsOn: cargoDepends,
   });
 
   return { localBin, alacritty, neovim, batPkg, batLink, ghRepo, ghPkg, delta, zellij };

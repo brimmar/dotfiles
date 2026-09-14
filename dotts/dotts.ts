@@ -17,14 +17,22 @@ export default () => {
 
   onPlatform('linux', () => {
     onDistro(['pop', 'ubuntu', 'debian'], () => {
-      systemRole();
-      packagesRole();
+      const pkgs = packagesRole();
+      systemRole({ unzip: pkgs.unzip });
       dockerRole({ user: hostUser });
-      vpRole();
-      languagesRole();
-      cliToolsRole();
+      const vp = vpRole({ curl: pkgs.curl });
+      const languages = languagesRole({
+        curl: pkgs.curl,
+        buildEssential: pkgs['build-essential'],
+        unzip: pkgs.unzip,
+      });
+      cliToolsRole({
+        rustup: languages.rustup,
+        buildEssential: pkgs['build-essential'],
+        libsslDev: pkgs['libssl-dev'],
+      });
       desktopRole({ user: hostUser });
-      aiToolsRole();
+      aiToolsRole({ vp: vp.installNode, curl: pkgs.curl });
       dotfilesRole();
       vaultRole();
     });
