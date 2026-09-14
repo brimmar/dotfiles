@@ -1,6 +1,6 @@
 layout {
 	pane size=1 borderless=true {
-		plugin location="file:/home/brimmar/projetos/zjstatus/target/wasm32-wasip1/release/zjstatus.wasm" {
+		plugin location="https://github.com/brimmar/zjstatus/releases/download/v0.24.1/zjstatus.wasm" {
 			format_left "{mode}#[bg=#2C2C2C] {tabs}"
 			format_center "#[fg=9399B2,bold,bg=#2C2C2C]{session}"
 			format_right "{command_agent_status}{command_timer_status} {command_cpu_usage} {command_memory_usage} {command_disk_usage} {datetime}"

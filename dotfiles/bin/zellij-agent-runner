@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# zellij-agent-runner: Universal lifecycle tracking & event hook wrapper for agy, codex, and opencode in Zellij
+# zellij-agent-runner: Universal lifecycle tracking & event hook wrapper for agy, codex, opencode, grok in Zellij
 set -eo pipefail
 
 AGENT_DIR="/tmp/zellij_agents"
@@ -26,6 +26,10 @@ case "$AGENT_ENGINE" in
     agy|antigravity)
         ENGINE_ICON="󱚤"
         ENGINE_COLOR="#cba6f7"
+        ;;
+    grok)
+        ENGINE_ICON="󰭹"
+        ENGINE_COLOR="#fcbf49"
         ;;
 esac
 
@@ -104,6 +108,16 @@ case "$AGENT_ENGINE" in
             exec agy --prompt-interactive "$*"
         else
             exec agy
+        fi
+        ;;
+
+    grok)
+        if [ "$MODE" == "fork" ]; then
+            exec grok --continue
+        elif [ "$#" -gt 0 ]; then
+            exec grok "$*"
+        else
+            exec grok
         fi
         ;;
 

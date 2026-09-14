@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# zmux: AI Agent Harness Orchestration Layer for Zellij (agy, codex, opencode)
+# zmux: AI Agent Harness Orchestration Layer for Zellij (agy, codex, opencode, grok)
 set -eo pipefail
 
 RUNNER="/home/brimmar/.local/bin/zellij-agent-runner"
@@ -14,6 +14,7 @@ ENGINES:
     opencode (OpenCode AI - 1.18.12)
     codex    (OpenAI Codex CLI)
     agy      (Google Antigravity CLI)
+    grok     (Grok Build - xAI)
 
 INSPECTION & LOCATION:
     hud
@@ -51,7 +52,7 @@ SESSION FORKING (Branching):
                  zmux fork codex      (runs: codex fork --last)
                  zmux fork agy        (runs: agy --continue)
 
-    fork-opencode, fork-codex, fork-agy
+    fork-opencode, fork-codex, fork-agy, fork-grok
         Direct shortcuts to fork sessions in a floating sidecar window
 
 INTER-AGENT COMMUNICATION (Agent-to-Agent):
@@ -72,7 +73,7 @@ EOF
 
 is_known_engine() {
     case "$1" in
-        opencode|codex|agy|antigravity) return 0 ;;
+        opencode|codex|agy|antigravity|grok) return 0 ;;
         *) return 1 ;;
     esac
 }
@@ -100,6 +101,7 @@ pad_engine() {
         opencode) printf "\033[1;38;2;242;205;205m󰚩 opencode\033[0m       " ;;
         codex)    printf "\033[1;38;2;137;220;235m󰩏 codex\033[0m          " ;;
         agy|antigravity) printf "\033[1;38;2;203;166;247m󱚤 agy\033[0m            " ;;
+        grok)     printf "\033[1;38;2;252;191;73m󰭹 grok\033[0m           " ;;
         *)        printf "\033[1;38;2;245;194;231m󱚤 %-15s\033[0m" "$1" ;;
     esac
 }
@@ -109,6 +111,7 @@ format_engine_icon() {
         opencode) echo -e "\033[1;38;2;242;205;205m󰚩 opencode\033[0m" ;;
         codex)    echo -e "\033[1;38;2;137;220;235m󰩏 codex\033[0m" ;;
         agy|antigravity) echo -e "\033[1;38;2;203;166;247m󱚤 agy\033[0m" ;;
+        grok)     echo -e "\033[1;38;2;252;191;73m󰭹 grok\033[0m" ;;
         *)        echo -e "\033[1;38;2;245;194;231m󱚤 $1\033[0m" ;;
     esac
 }
@@ -145,7 +148,7 @@ collect_agents() {
 
     # 2. Standalone process discovery
     local detected_pids
-    detected_pids=$(pgrep -f "opencode|codex|agy" 2>/dev/null || true)
+    detected_pids=$(pgrep -f "opencode|codex|agy|grok" 2>/dev/null || true)
     for p in $detected_pids; do
         [ "$p" -eq $$ ] && continue
         [ -n "${SEEN_PIDS[$p]}" ] && continue
@@ -156,12 +159,14 @@ collect_agents() {
         [ "$comm" == "bash" ] || [ "$comm" == "sh" ] || [ "$comm" == "grep" ] && continue
 
         cmdline=$(tr '\0' ' ' < "/proc/$p/cmdline" 2>/dev/null | tr '|' ' ' || true)
-        case "$cmdline" in
-            *opencode*) engine="opencode" ;;
-            *codex*)    engine="codex" ;;
-            *agy*)      engine="agy" ;;
-            *) continue ;;
-        esac
+        engine=""
+        # Use strict word-boundary matching to avoid false positives like grok-bot
+        if [[ "$cmdline" =~ (^|[[:space:]/])opencode([[:space:]/]|$) ]]; then engine="opencode"
+        elif [[ "$cmdline" =~ (^|[[:space:]/])codex([[:space:]/]|$) ]]; then engine="codex"
+        elif [[ "$cmdline" =~ (^|[[:space:]/])agy([[:space:]/]|$) ]]; then engine="agy"
+        elif [[ "$cmdline" =~ (^|[[:space:]/])grok([[:space:]/]|$) ]]; then engine="grok"
+        else continue
+        fi
 
         z_session=$(tr '\0' '\n' < "/proc/$p/environ" 2>/dev/null | grep '^ZELLIJ_SESSION_NAME=' | cut -d= -f2 || true)
         z_pane=$(tr '\0' '\n' < "/proc/$p/environ" 2>/dev/null | grep '^ZELLIJ_PANE_ID=' | cut -d= -f2 || true)
@@ -291,6 +296,9 @@ is_agent_alive() {
         agy|antigravity)
             [[ "$comm" == *"agy"* || "$cmd" =~ (^|[ /])agy([ /]|$) ]] && return 0
             ;;
+        grok)
+            [[ "$comm" == *"grok"* || "$cmd" =~ (^|[ /])grok([ /]|$) ]] && return 0
+            ;;
     esac
     return 1
 }
@@ -308,7 +316,7 @@ is_agent_alive_in_pane() {
 
     # 2. Check if active agent process is running in that pane
     if [ -n "$pane_id" ]; then
-        for p in $(pgrep -u "$UID" "opencode|codex|agy" 2>/dev/null || true); do
+        for p in $(pgrep -u "$UID" "opencode|codex|agy|grok" 2>/dev/null || true); do
             [ ! -d "/proc/$p" ] && continue
             local p_pane p_sess
             p_pane=$(tr '\0' '\n' 2>/dev/null < "/proc/$p/environ" | grep -a '^ZELLIJ_PANE_ID=' | cut -d= -f2 || true)
@@ -362,6 +370,7 @@ build_tab_title() {
                 local icon="󱚤"
                 [ "$ev_eng" == "opencode" ] && icon="󰚩"
                 [ "$ev_eng" == "codex" ] && icon="󰩏"
+                [ "$ev_eng" == "grok" ] && icon="󰭹"
 
                 local sym="󰄬"
                 [ "$ev_st" == "working" ] && sym="󱑋"
@@ -377,6 +386,7 @@ build_tab_title() {
         local icon="󱚤"
         [ "$emitting_engine" == "opencode" ] && icon="󰚩"
         [ "$emitting_engine" == "codex" ] && icon="󰩏"
+        [ "$emitting_engine" == "grok" ] && icon="󰭹"
         instance_parts+=("$icon $emitting_engine 󰄬")
     fi
 
@@ -531,6 +541,11 @@ case "$cmd" in
         zellij action new-pane --floating --width 78% --height 80% --x 11% --y 10% --name "󱚤 agy (forked)" -- "$RUNNER" "$agent_id" "agy" "fork"
         ;;
 
+    fork-grok)
+        agent_id="fork_grok_$(date +%s)_$RANDOM"
+        zellij action new-pane --floating --width 78% --height 80% --x 11% --y 10% --name "󰭹 grok (forked)" -- "$RUNNER" "$agent_id" "grok" "fork"
+        ;;
+
     # Inter-Agent Communication
     pipe)
         src_engine="${1:-agy}"
@@ -606,6 +621,11 @@ $instruction"
         zellij action new-pane --floating --width 78% --height 80% --x 11% --y 10% --name "󱚤 agy Sidecar" -- "$RUNNER" "$agent_id" "agy" "normal" "$@"
         ;;
 
+    grok)
+        agent_id="float_grok_$(date +%s)_$RANDOM"
+        zellij action new-pane --floating --width 78% --height 80% --x 11% --y 10% --name "󰭹 grok Sidecar" -- "$RUNNER" "$agent_id" "grok" "normal" "$@"
+        ;;
+
     swarm)
         if [ "$#" -eq 0 ]; then
             echo "Usage: zmux swarm <engine:task1> <engine:task2> ..."
@@ -649,6 +669,7 @@ $instruction"
         icon="󱚤"
         [ "$ENGINE" == "opencode" ] && icon="󰚩"
         [ "$ENGINE" == "codex" ] && icon="󰩏"
+        [ "$ENGINE" == "grok" ] && icon="󰭹"
 
         agent_id="tab_${ENGINE}_$(date +%s)_$RANDOM"
         zellij action new-tab --name "$icon $ENGINE 󰏤" -- "$RUNNER" "$agent_id" "$ENGINE" "normal" $PROMPT
@@ -659,6 +680,7 @@ $instruction"
         icon="󱚤"
         [ "$ENGINE" == "opencode" ] && icon="󰚩"
         [ "$ENGINE" == "codex" ] && icon="󰩏"
+        [ "$ENGINE" == "grok" ] && icon="󰭹"
 
         agent_id="fork_tab_${ENGINE}_$(date +%s)_$RANDOM"
         zellij action new-tab --name "$icon $ENGINE (fork) 󰏤" -- "$RUNNER" "$agent_id" "$ENGINE" "fork"
@@ -679,6 +701,7 @@ $instruction"
         icon="󱚤"
         [ "$target_engine" == "opencode" ] && icon="󰚩"
         [ "$target_engine" == "codex" ] && icon="󰩏"
+        [ "$target_engine" == "grok" ] && icon="󰭹"
 
         agent_id="dock_${target_engine}_$(date +%s)_$RANDOM"
         zellij action new-pane --direction right --name "$icon $target_engine (docked)" -- "$RUNNER" "$agent_id" "$target_engine" "normal" $PROMPT
@@ -738,6 +761,10 @@ EOF
                 icon="󱚤"
                 eng_color="#cba6f7"
                 ;;
+            grok)
+                icon="󰭹"
+                eng_color="#fcbf49"
+                ;;
         esac
 
         symbol="󰄬"
@@ -784,6 +811,7 @@ EOF
         check_engine "opencode" "opencode" "opencode --version"
         check_engine "codex" "codex" "codex --version"
         check_engine "agy" "agy" "agy --version"
+        check_engine "grok" "grok" "grok --version"
         ;;
 
     kill-all)

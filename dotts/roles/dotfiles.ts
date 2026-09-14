@@ -18,7 +18,27 @@ export function dotfilesRole(props: DotfilesRoleProps = {}) {
   });
 
   const configDir = dir('~/.config');
+  const localBin = dir('~/.local/bin');
   const ombThemesDir = dir('~/.oh-my-bash/themes/sexy');
+
+  const binFiles = [
+    'timer',
+    'zellij-agent-runner',
+    'zellij-agent-status',
+    'zellij-cpu-status',
+    'zellij-disk-status',
+    'zellij-memory-status',
+    'zellij-timer-status',
+    'zmux',
+    'zmux-agy-hook',
+    'zmux-codex-hook',
+  ];
+
+  const binLinks = binFiles.map((name) =>
+    link(`~/.local/bin/${name}`, `${basePath}/dotfiles/bin/${name}`, {
+      dependsOn: [repo, localBin],
+    }),
+  );
 
   const links = [
     link('~/.config/nvim', `${basePath}/dotfiles/nvim/.config/nvim`, {
@@ -43,7 +63,8 @@ export function dotfilesRole(props: DotfilesRoleProps = {}) {
         dependsOn: [repo, ombThemesDir],
       },
     ),
+    ...binLinks,
   ];
 
-  return { repo, configDir, links };
+  return { repo, configDir, localBin, links };
 }

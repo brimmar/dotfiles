@@ -476,6 +476,16 @@ show_startup_tips false
 // Default: 8082
 // (Requires restart)
 // web_server_port 8082
+
+// --- LAN Web Access (phone) ---
+// Binds to all interfaces so you can open https://192.168.1.107:8082 on your phone
+// Requires cert/key because Zellij enforces HTTPS for non-localhost binds (0.44.3+)
+web_server true
+web_server_ip "0.0.0.0"
+web_server_port 8082
+web_sharing "on"
+web_server_cert "/home/brimmar/.config/zellij/certs/cert.pem"
+web_server_key "/home/brimmar/.config/zellij/certs/key.pem"
  
 // A command to run (will be wrapped with sh -c and provided the RESURRECT_COMMAND env variable) 
 // after Zellij attempts to discover a command inside a pane when resurrecting sessions, the STDOUT
