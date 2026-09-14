@@ -14,6 +14,7 @@ export function dotfilesRole(props: DotfilesRoleProps = {}) {
     dest: basePath,
     depth: 1,
     sparse: ['dotfiles'],
+    force: true,
   });
 
   const configDir = dir('~/.config');
