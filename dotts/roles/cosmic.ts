@@ -51,7 +51,10 @@ export function cosmicRole(): Record<string, ResourceHandle> {
     content: 'false\n',
   });
 
-  // Compositor tiling: auto-tile per workspace
+  // Compositor tiling: enable auto-tiling and set behavior per workspace
+  resources.tilingEnabled = file('~/.config/cosmic/com.system76.CosmicComp/v1/tiling_enabled', {
+    content: 'true\n',
+  });
   resources.autotile = file('~/.config/cosmic/com.system76.CosmicComp/v1/autotile_behavior', {
     content: 'PerWorkspace\n',
   });
@@ -94,7 +97,7 @@ export function cosmicRole(): Record<string, ResourceHandle> {
 
   // Dock auto-hide and size
   resources.dockAutohide = file('~/.config/cosmic/com.system76.CosmicPanel.Dock/v1/autohide', {
-    content: 'Auto\n',
+    content: 'Always\n',
   });
   resources.dockExpand = file(
     '~/.config/cosmic/com.system76.CosmicPanel.Dock/v1/expand_to_edges',

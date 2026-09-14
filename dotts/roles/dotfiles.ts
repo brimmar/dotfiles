@@ -17,9 +17,17 @@ export function dotfilesRole(props: DotfilesRoleProps = {}) {
     force: true,
   });
 
+  // Clone Oh My Bash
+  const ohMyBash = git('https://github.com/ohmybash/oh-my-bash.git', {
+    dest: '~/.oh-my-bash',
+    depth: 1,
+  });
+
   const configDir = dir('~/.config');
   const localBin = dir('~/.local/bin');
-  const ombThemesDir = dir('~/.oh-my-bash/themes/sexy');
+  const ombThemesDir = dir('~/.oh-my-bash/themes/sexy', {
+    dependsOn: [ohMyBash],
+  });
 
   const binFiles = [
     'timer',
@@ -51,7 +59,7 @@ export function dotfilesRole(props: DotfilesRoleProps = {}) {
       dependsOn: [repo, configDir],
     }),
     link('~/.bashrc', `${basePath}/dotfiles/oh-my-bash/.bashrc`, {
-      dependsOn: [repo],
+      dependsOn: [repo, ohMyBash],
     }),
     link('~/.config/zellij', `${basePath}/dotfiles/zellij/.config/zellij`, {
       dependsOn: [repo, configDir],
