@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    "skipLibCheck": true,
+    "paths": {
+      "dotts": [
+        "./.dotts/types"
+      ]
+    }
+  },
+  "include": [
+    "./*.ts",
+    "./roles/**/*.ts"
+  ]
+}

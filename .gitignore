@@ -1,0 +1,4 @@
+node_modules/
+.dotts/
+**/.dotts/
+dotfiles/zellij/.config/zellij/certs/
