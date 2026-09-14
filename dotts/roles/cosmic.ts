@@ -52,12 +52,21 @@ export function cosmicRole(): Record<string, ResourceHandle> {
   });
 
   // Compositor tiling: enable auto-tiling and set behavior per workspace
-  resources.tilingEnabled = file('~/.config/cosmic/com.system76.CosmicComp/v1/tiling_enabled', {
+  resources.autotile = file('~/.config/cosmic/com.system76.CosmicComp/v1/autotile', {
     content: 'true\n',
   });
-  resources.autotile = file('~/.config/cosmic/com.system76.CosmicComp/v1/autotile_behavior', {
-    content: 'PerWorkspace\n',
-  });
+  resources.autotileBehavior = file(
+    '~/.config/cosmic/com.system76.CosmicComp/v1/autotile_behavior',
+    {
+      content: 'PerWorkspace\n',
+    },
+  );
+  resources.compActiveHint = file(
+    '~/.config/cosmic/com.system76.CosmicComp/v1/active_hint',
+    {
+      content: 'true\n',
+    },
+  );
 
   // Tiling gaps (outer, inner): 0, 0
   resources.themeDarkGaps = file('~/.config/cosmic/com.system76.CosmicTheme.Dark/v2/gaps', {

@@ -17,6 +17,7 @@ const SYSTEM_PACKAGES = [
   'unzip',
   'tar',
   'iproute2',
+  'pop-wallpapers',
 ] as const;
 
 export type SystemPackageName = (typeof SYSTEM_PACKAGES)[number];

@@ -81,7 +81,6 @@ completions=(
 # Add wisely, as too many aliases slow down shell startup.
 aliases=(
   general
-  ytdl
 )
 
 # Which plugins would you like to load? (plugins can be found in ~/.oh-my-bash/plugins/*)
@@ -233,6 +232,8 @@ alias php-version='_php-version() { sudo update-alternatives --set php /usr/bin/
 
 # Comando pro laravel sail
 alias sail='[ -f sail ] && sh sail || sh vendor/bin/sail'
+
+alias ytdl='yt-dlp'
 
 
 

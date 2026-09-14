@@ -21,13 +21,12 @@ export function dotfilesRole(props: DotfilesRoleProps = {}) {
   const ohMyBash = git('https://github.com/ohmybash/oh-my-bash.git', {
     dest: '~/.oh-my-bash',
     depth: 1,
+    branch: 'master',
+    force: true,
   });
 
   const configDir = dir('~/.config');
   const localBin = dir('~/.local/bin');
-  const ombThemesDir = dir('~/.oh-my-bash/themes/sexy', {
-    dependsOn: [ohMyBash],
-  });
 
   const binFiles = [
     'timer',
@@ -68,7 +67,7 @@ export function dotfilesRole(props: DotfilesRoleProps = {}) {
       '~/.oh-my-bash/themes/sexy/sexy.theme.sh',
       `${basePath}/dotfiles/oh-my-bash/.oh-my-bash/themes/sexy/sexy.theme.sh`,
       {
-        dependsOn: [repo, ombThemesDir],
+        dependsOn: [repo, ohMyBash],
       },
     ),
     ...binLinks,
