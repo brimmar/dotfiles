@@ -70,6 +70,13 @@ export function dotfilesRole(props: DotfilesRoleProps = {}) {
         dependsOn: [repo, ohMyBash],
       },
     ),
+    link(
+      '~/.oh-my-bash/custom/aliases/ytdl.aliases.sh',
+      `${basePath}/dotfiles/oh-my-bash/.oh-my-bash/custom/aliases/ytdl.aliases.sh`,
+      {
+        dependsOn: [repo, ohMyBash],
+      },
+    ),
     ...binLinks,
   ];
 
