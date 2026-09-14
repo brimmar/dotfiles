@@ -1,10 +1,17 @@
-import { dir, link, type ResourceHandle, remoteFile, script, service, unarchive } from 'dotts';
+import { dir, file, link, type ResourceHandle, remoteFile, script, service, unarchive } from 'dotts';
 
 export interface SystemRoleProps {
   unzip?: ResourceHandle;
 }
 
 export function systemRole(props: SystemRoleProps = {}) {
+  // Ensure chrony allows stepping clock indefinitely after snapshot restores
+  file('/etc/chrony/conf.d/snapshot-timesync.conf', {
+    content: 'makestep 1 -1\n',
+    mode: 0o644,
+    become: true,
+  });
+
   // Stop and disable bluetooth service
   const bluetooth = service('bluetooth', {
     state: 'stopped',
