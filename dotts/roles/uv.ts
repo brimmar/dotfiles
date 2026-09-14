@@ -26,5 +26,13 @@ export function uvRole(props: UvRoleProps = {}) {
     },
   );
 
-  return { installUv, installPython, installPosting };
+  const installYtDlp = script(
+    'PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH" uv tool install yt-dlp',
+    {
+      unless: 'command -v yt-dlp >/dev/null 2>&1 || test -f ~/.local/bin/yt-dlp',
+      dependsOn: [installUv],
+    },
+  );
+
+  return { installUv, installPython, installPosting, installYtDlp };
 }
