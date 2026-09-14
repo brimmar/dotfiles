@@ -16,10 +16,14 @@ export function aiToolsRole(props: AiToolsRoleProps = {}) {
   const antigravity = pkg('antigravity', { dependsOn: [antigravityRepo] });
 
   // OpenAI Codex via Vite+
-  const codex = script('~/.vite-plus/bin/vp install -g @openai/codex', {
-    unless: 'command -v codex >/dev/null 2>&1 || test -f ~/.vite-plus/bin/codex',
-    dependsOn: props.vp ? [props.vp] : [],
-  });
+  const codex = script(
+    'PATH="$HOME/.local/share/vite-plus/bin:$HOME/.vite-plus/bin:$PATH" vp install -g @openai/codex',
+    {
+      unless:
+        'command -v codex >/dev/null 2>&1 || test -f ~/.local/share/vite-plus/bin/codex || test -f ~/.vite-plus/bin/codex',
+      dependsOn: props.vp ? [props.vp] : [],
+    },
+  );
 
   // Opencode
   const opencode = script('curl -fsSL https://opencode.ai/install | bash', {

@@ -239,11 +239,6 @@ alias sail='[ -f sail ] && sh sail || sh vendor/bin/sail'
 # Rust Cargo
 . "$HOME/.cargo/env"
 
-# Nvm - Node Version Manager
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-
 # bash_completion
 source ~/.bash_completion/alacritty
 
@@ -300,7 +295,11 @@ export PATH="$HOME/.grok/bin:$PATH"
 # <<< grok installer <<<
 
 # Vite+ bin (https://viteplus.dev)
-. "$HOME/.vite-plus/env"
+if [ -f "$HOME/.config/vite-plus/env" ]; then
+    . "$HOME/.config/vite-plus/env"
+elif [ -f "$HOME/.vite-plus/env" ]; then
+    . "$HOME/.vite-plus/env"
+fi
 
 # -------------------------------------------------------------------
 # VM management (VirtualBox + CIFS mounts)
@@ -590,4 +589,24 @@ if [ -n "$ZELLIJ" ]; then
         echo "zjstatus::pipe::agent_status::" | zellij action pipe 2>/dev/null || true
         return $code
     }
+
+    grok() {
+        local tab_id="${ZELLIJ_TAB_ID:-$(zellij action current-tab-info 2>/dev/null | grep '^id:' | awk '{print $2}')}"
+        local pane_id="${ZELLIJ_PANE_ID:-0}"
+        export ZELLIJ_TAB_ID="$tab_id"
+        export _ZMUX_AGENT_ACTIVE=1
+        export _ZMUX_AGENT_ENGINE="grok"
+        zmux emit ready grok "Ready" "$tab_id" "$pane_id" "$$" 2>/dev/null || true
+        command grok "$@"
+        local code=$?
+        export _ZMUX_AGENT_ACTIVE=0
+        rm -f "/tmp/zellij_agents/event_pane_${pane_id}.json"
+        zmux sync-tab "$tab_id" 2>/dev/null || true
+        echo "zjstatus::pipe::agent_status::" | zellij action pipe 2>/dev/null || true
+        return $code
+    }
 fi
+
+# Qwen Code PATH block begin
+export PATH='/home/brimmar/.local/bin':$PATH
+# Qwen Code PATH block end
