@@ -13,7 +13,7 @@ export function dotfilesRole(props: DotfilesRoleProps = {}) {
   const repo = git(repoUrl, {
     dest: basePath,
     depth: 1,
-    sparse: ['dotfiles', 'dotts'],
+    sparse: ['dotfiles', 'dotts', '.dotts'],
     force: true,
   });
 
