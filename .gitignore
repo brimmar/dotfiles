@@ -1,4 +1,6 @@
 node_modules/
-.dotts/
-**/.dotts/
+.dotts/types/
+.dotts/state.json
+**/.dotts/types/
+**/.dotts/state.json
 dotfiles/zellij/.config/zellij/certs/

@@ -7,3 +7,4 @@ export * from './desktop';
 export * from './ai-tools';
 export * from './dotfiles';
 export * from './system';
+export * from './vault';

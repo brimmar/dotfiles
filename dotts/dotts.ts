@@ -8,6 +8,7 @@ import {
   languagesRole,
   packagesRole,
   systemRole,
+  vaultRole,
   vpRole,
 } from './roles';
 
@@ -25,6 +26,7 @@ export default () => {
       desktopRole({ user: hostUser });
       aiToolsRole();
       dotfilesRole();
+      vaultRole();
     });
   });
 };
