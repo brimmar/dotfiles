@@ -1,4 +1,4 @@
-import { dir, git, type ResourceHandle, script, symlink } from 'dotts';
+import { dir, git, link, type ResourceHandle, script } from 'dotts';
 
 export interface ZjstatusRoleProps {
   rustup?: ResourceHandle;
@@ -44,7 +44,7 @@ export function zjstatusRole(props: ZjstatusRoleProps = {}) {
   );
 
   const projetosDir = dir('~/projetos');
-  const projetosSymlink = symlink('~/zjstatus', '~/projetos/zjstatus', {
+  const projetosSymlink = link('~/projetos/zjstatus', '~/zjstatus', {
     dependsOn: [projetosDir, repo],
   });
 
