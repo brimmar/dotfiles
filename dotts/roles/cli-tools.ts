@@ -10,7 +10,6 @@ export function cliToolsRole(props: CliToolsRoleProps = {}) {
   const localBin = dir('~/.local/bin');
 
   // Terminal & Editor
-  const alacritty = pkg('alacritty');
   const neovim = pkg('neovim');
 
   // Bat & symlink batcat -> bat
@@ -46,5 +45,5 @@ export function cliToolsRole(props: CliToolsRoleProps = {}) {
     dependsOn: cargoDepends,
   });
 
-  return { localBin, alacritty, neovim, batPkg, batLink, ghRepo, ghPkg, delta, zellij };
+  return { localBin, neovim, batPkg, batLink, ghRepo, ghPkg, delta, zellij };
 }

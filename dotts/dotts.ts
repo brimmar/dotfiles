@@ -1,6 +1,7 @@
 import { onDistro, onPlatform } from 'dotts';
 import {
   aiToolsRole,
+  alacrittyRole,
   cliToolsRole,
   desktopRole,
   dockerRole,
@@ -10,6 +11,7 @@ import {
   systemRole,
   vaultRole,
   vpRole,
+  zjstatusRole,
 } from './roles';
 
 export default () => {
@@ -26,10 +28,17 @@ export default () => {
         buildEssential: pkgs['build-essential'],
         unzip: pkgs.unzip,
       });
+      alacrittyRole({
+        rustup: languages.rustup,
+        buildEssential: pkgs['build-essential'],
+      });
       cliToolsRole({
         rustup: languages.rustup,
         buildEssential: pkgs['build-essential'],
         libsslDev: pkgs['libssl-dev'],
+      });
+      zjstatusRole({
+        rustup: languages.rustup,
       });
       desktopRole({ user: hostUser });
       aiToolsRole({ vp: vp.installNode, curl: pkgs.curl });
