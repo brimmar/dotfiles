@@ -14,6 +14,7 @@ export function alacrittyRole(props: AlacrittyRoleProps = {}) {
   const xcbXfixes = pkg('libxcb-xfixes0-dev');
   const xkbcommon = pkg('libxkbcommon-dev');
   const desktopUtils = pkg('desktop-file-utils');
+  const scdoc = pkg('scdoc');
 
   const deps = [
     cmake,
@@ -23,6 +24,7 @@ export function alacrittyRole(props: AlacrittyRoleProps = {}) {
     xcbXfixes,
     xkbcommon,
     desktopUtils,
+    scdoc,
     ...(props.buildEssential ? [props.buildEssential] : []),
     ...(props.rustup ? [props.rustup] : []),
   ];
@@ -70,12 +72,22 @@ export function alacrittyRole(props: AlacrittyRoleProps = {}) {
 
   // Man pages
   const man = script(
-    'mkdir -p /usr/local/share/man/man1 && gzip -c extra/alacritty.man > /usr/local/share/man/man1/alacritty.1.gz && gzip -c extra/alacritty-msg.man > /usr/local/share/man/man1/alacritty-msg.1.gz',
+    'mkdir -p /usr/local/share/man/man1 /usr/local/share/man/man5 /usr/local/share/man/man7 && ' +
+      'if [ -f extra/alacritty.man ]; then ' +
+      'gzip -c extra/alacritty.man > /usr/local/share/man/man1/alacritty.1.gz && ' +
+      'gzip -c extra/alacritty-msg.man > /usr/local/share/man/man1/alacritty-msg.1.gz; ' +
+      'elif command -v scdoc >/dev/null 2>&1; then ' +
+      'scdoc < extra/man/alacritty.1.scd | gzip -c > /usr/local/share/man/man1/alacritty.1.gz && ' +
+      'scdoc < extra/man/alacritty-msg.1.scd | gzip -c > /usr/local/share/man/man1/alacritty-msg.1.gz && ' +
+      'scdoc < extra/man/alacritty.5.scd | gzip -c > /usr/local/share/man/man5/alacritty.5.gz && ' +
+      'scdoc < extra/man/alacritty-bindings.5.scd | gzip -c > /usr/local/share/man/man5/alacritty-bindings.5.gz && ' +
+      'scdoc < extra/man/alacritty-escapes.7.scd | gzip -c > /usr/local/share/man/man7/alacritty-escapes.7.gz; ' +
+      'fi',
     {
       workingDir: '~/alacritty',
       become: true,
       unless: 'test -f /usr/local/share/man/man1/alacritty.1.gz',
-      dependsOn: [repo],
+      dependsOn: [repo, scdoc],
     },
   );
 
@@ -98,6 +110,7 @@ export function alacrittyRole(props: AlacrittyRoleProps = {}) {
     xcbXfixes,
     xkbcommon,
     desktopUtils,
+    scdoc,
     repo,
     build,
     terminfo,
