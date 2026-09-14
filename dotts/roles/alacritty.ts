@@ -37,7 +37,8 @@ export function alacrittyRole(props: AlacrittyRoleProps = {}) {
   // Build release binary
   const build = script('~/.cargo/bin/cargo build --release', {
     workingDir: '~/alacritty',
-    unless: 'test -x /usr/local/bin/alacritty && /usr/local/bin/alacritty --version | grep -qE "0.15|0.16"',
+    unless:
+      'test -f target/release/alacritty || (test -x /usr/local/bin/alacritty && /usr/local/bin/alacritty --version | grep -qvE "0\\.1[0-4]\\.")',
     dependsOn: [repo],
   });
 
