@@ -6,6 +6,7 @@ import {
   desktopRole,
   dockerRole,
   dotfilesRole,
+  fontsRole,
   languagesRole,
   packagesRole,
   systemRole,
@@ -40,6 +41,7 @@ export default () => {
       zjstatusRole({
         rustup: languages.rustup,
       });
+      fontsRole();
       desktopRole({ user: hostUser });
       aiToolsRole({ vp: vp.installNode, curl: pkgs.curl });
       dotfilesRole();

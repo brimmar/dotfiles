@@ -1,4 +1,4 @@
-import { git, type ResourceHandle, script } from 'dotts';
+import { dir, git, type ResourceHandle, script, symlink } from 'dotts';
 
 export interface ZjstatusRoleProps {
   rustup?: ResourceHandle;
@@ -29,5 +29,24 @@ export function zjstatusRole(props: ZjstatusRoleProps = {}) {
     },
   );
 
-  return { repo, wasmTarget, build };
+  const compatTarget = script(
+    'mkdir -p ~/zjstatus/target/wasm32-wasi/release ~/zjstatus/target/wasm32-wasip1/release && ' +
+      'if [ -f ~/zjstatus/target/wasm32-wasip1/release/zjstatus.wasm ] && [ ! -f ~/zjstatus/target/wasm32-wasi/release/zjstatus.wasm ]; then ' +
+      '  ln -sf ~/zjstatus/target/wasm32-wasip1/release/zjstatus.wasm ~/zjstatus/target/wasm32-wasi/release/zjstatus.wasm; ' +
+      'elif [ -f ~/zjstatus/target/wasm32-wasi/release/zjstatus.wasm ] && [ ! -f ~/zjstatus/target/wasm32-wasip1/release/zjstatus.wasm ]; then ' +
+      '  ln -sf ~/zjstatus/target/wasm32-wasi/release/zjstatus.wasm ~/zjstatus/target/wasm32-wasip1/release/zjstatus.wasm; ' +
+      'fi',
+    {
+      unless:
+        'test -f ~/zjstatus/target/wasm32-wasip1/release/zjstatus.wasm && test -f ~/zjstatus/target/wasm32-wasi/release/zjstatus.wasm',
+      dependsOn: [build],
+    },
+  );
+
+  const projetosDir = dir('~/projetos');
+  const projetosSymlink = symlink('~/zjstatus', '~/projetos/zjstatus', {
+    dependsOn: [projetosDir, repo],
+  });
+
+  return { repo, wasmTarget, build, compatTarget, projetosDir, projetosSymlink };
 }
