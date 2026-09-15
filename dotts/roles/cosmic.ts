@@ -164,18 +164,14 @@ export function cosmicRole(): Record<string, ResourceHandle> {
     },
   );
 
-  // Top panel: remove App and Workspaces buttons, align clock to the right
+  // Top panel: clean applets (no a11y, input sources, tiling, bluetooth)
   resources.panelWings = file(
     '~/.config/cosmic/com.system76.CosmicPanel.Panel/v1/plugins_wings',
     {
       content: `Some(([
 ], [
-    "com.system76.CosmicAppletInputSources",
     "com.system76.CosmicAppletStatusArea",
-    "com.system76.CosmicAppletA11y",
-    "com.system76.CosmicAppletTiling",
     "com.system76.CosmicAppletAudio",
-    "com.system76.CosmicAppletBluetooth",
     "com.system76.CosmicAppletNetwork",
     "com.system76.CosmicAppletBattery",
     "com.system76.CosmicAppletNotifications",

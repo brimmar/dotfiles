@@ -209,6 +209,7 @@
             - "/home/{{ host_user }}/.config/cosmic/com.system76.CosmicComp/v1"
             - "/home/{{ host_user }}/.config/cosmic/com.system76.CosmicPanel/v1"
             - "/home/{{ host_user }}/.config/cosmic/com.system76.CosmicPanel.Dock/v1"
+            - "/home/{{ host_user }}/.config/cosmic/com.system76.CosmicPanel.Panel/v1"
             - "/home/{{ host_user }}/.config/cosmic/com.system76.CosmicTheme.Dark/v2"
             - "/home/{{ host_user }}/.config/cosmic/com.system76.CosmicTheme.Dark.Builder/v2"
 
@@ -234,6 +235,28 @@
           copy:
             content: "false\n"
             dest: "/home/{{ host_user }}/.config/cosmic/com.system76.CosmicPanel.Dock/v1/exclusive_zone"
+            mode: '0644'
+
+        - name: Configure COSMIC top panel applets (clean right wing, no a11y, input, tiling, bluetooth)
+          copy:
+            content: |
+              Some(([
+              ], [
+                  "com.system76.CosmicAppletStatusArea",
+                  "com.system76.CosmicAppletAudio",
+                  "com.system76.CosmicAppletNetwork",
+                  "com.system76.CosmicAppletBattery",
+                  "com.system76.CosmicAppletNotifications",
+                  "com.system76.CosmicAppletPower",
+                  "com.system76.CosmicAppletTime",
+              ]))
+            dest: "/home/{{ host_user }}/.config/cosmic/com.system76.CosmicPanel.Panel/v1/plugins_wings"
+            mode: '0644'
+
+        - name: Disable COSMIC top panel center applets
+          copy:
+            content: "None\n"
+            dest: "/home/{{ host_user }}/.config/cosmic/com.system76.CosmicPanel.Panel/v1/plugins_center"
             mode: '0644'
 
         - name: Set COSMIC active hint border to 1px
