@@ -208,6 +208,9 @@
           loop:
             - "/home/{{ host_user }}/.config/cosmic/com.system76.CosmicComp/v1"
             - "/home/{{ host_user }}/.config/cosmic/com.system76.CosmicPanel/v1"
+            - "/home/{{ host_user }}/.config/cosmic/com.system76.CosmicPanel.Dock/v1"
+            - "/home/{{ host_user }}/.config/cosmic/com.system76.CosmicTheme.Dark/v2"
+            - "/home/{{ host_user }}/.config/cosmic/com.system76.CosmicTheme.Dark.Builder/v2"
 
         - name: Enable COSMIC auto-tiling
           copy:
@@ -226,4 +229,66 @@
             content: "[\n    \"Panel\",\n]\n"
             dest: "/home/{{ host_user }}/.config/cosmic/com.system76.CosmicPanel/v1/entries"
             mode: '0644'
+
+        - name: Disable bottom dock exclusive zone
+          copy:
+            content: "false\n"
+            dest: "/home/{{ host_user }}/.config/cosmic/com.system76.CosmicPanel.Dock/v1/exclusive_zone"
+            mode: '0644'
+
+        - name: Set COSMIC active hint border to 1px
+          copy:
+            content: "1\n"
+            dest: "{{ item }}"
+            mode: '0644'
+          loop:
+            - "/home/{{ host_user }}/.config/cosmic/com.system76.CosmicTheme.Dark/v2/active_hint"
+            - "/home/{{ host_user }}/.config/cosmic/com.system76.CosmicTheme.Dark.Builder/v2/active_hint"
+
+        - name: Set COSMIC corner radii to sharp square corners
+          copy:
+            content: |
+              (
+                  radius_0: (0.0, 0.0, 0.0, 0.0),
+                  radius_xs: (0.0, 0.0, 0.0, 0.0),
+                  radius_s: (0.0, 0.0, 0.0, 0.0),
+                  radius_m: (0.0, 0.0, 0.0, 0.0),
+                  radius_l: (0.0, 0.0, 0.0, 0.0),
+                  radius_xl: (0.0, 0.0, 0.0, 0.0),
+              )
+            dest: "{{ item }}"
+            mode: '0644'
+          loop:
+            - "/home/{{ host_user }}/.config/cosmic/com.system76.CosmicTheme.Dark/v2/corner_radii"
+            - "/home/{{ host_user }}/.config/cosmic/com.system76.CosmicTheme.Dark.Builder/v2/corner_radii"
+
+        - name: Set COSMIC graphite accent and window border color
+          copy:
+            content: |
+              (
+                  base: "#484848FF",
+                  hover: "#585858FF",
+                  pressed: "#383838FF",
+                  selected: "#585858FF",
+                  selected_text: "#FFFFFFFF",
+                  focus: "#707070FF",
+                  divider: "#000000FF",
+                  on: "#FFFFFFFF",
+                  disabled: "#383838FF",
+                  on_disabled: "#282828FF",
+                  border: "#707070FF",
+                  disabled_border: "#38383880",
+              )
+            dest: "/home/{{ host_user }}/.config/cosmic/com.system76.CosmicTheme.Dark/v2/accent"
+            mode: '0644'
+
+        - name: Set COSMIC window tiling gaps to zero
+          copy:
+            content: "(0, 0)\n"
+            dest: "{{ item }}"
+            mode: '0644'
+          loop:
+            - "/home/{{ host_user }}/.config/cosmic/com.system76.CosmicTheme.Dark/v2/gaps"
+            - "/home/{{ host_user }}/.config/cosmic/com.system76.CosmicTheme.Dark.Builder/v2/gaps"
+
 

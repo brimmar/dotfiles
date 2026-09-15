@@ -82,18 +82,58 @@ export function cosmicRole(): Record<string, ResourceHandle> {
     },
   );
 
-  // Active window hint border (3px)
+  // Active window hint border (1px)
   resources.themeDarkActiveHint = file(
     '~/.config/cosmic/com.system76.CosmicTheme.Dark/v2/active_hint',
     {
-      content: '3\n',
+      content: '1\n',
     },
   );
   resources.themeDarkBuilderActiveHint = file(
     '~/.config/cosmic/com.system76.CosmicTheme.Dark.Builder/v2/active_hint',
     {
-      content: '3\n',
+      content: '1\n',
     },
+  );
+
+  // Window and widget corner roundness: sharp square corners (radius 0)
+  const sharpCornerRadii = `(
+    radius_0: (0.0, 0.0, 0.0, 0.0),
+    radius_xs: (0.0, 0.0, 0.0, 0.0),
+    radius_s: (0.0, 0.0, 0.0, 0.0),
+    radius_m: (0.0, 0.0, 0.0, 0.0),
+    radius_l: (0.0, 0.0, 0.0, 0.0),
+    radius_xl: (0.0, 0.0, 0.0, 0.0),
+)\n`;
+
+  resources.themeDarkCornerRadii = file(
+    '~/.config/cosmic/com.system76.CosmicTheme.Dark/v2/corner_radii',
+    { content: sharpCornerRadii },
+  );
+  resources.themeDarkBuilderCornerRadii = file(
+    '~/.config/cosmic/com.system76.CosmicTheme.Dark.Builder/v2/corner_radii',
+    { content: sharpCornerRadii },
+  );
+
+  // Sleek graphite accent and window border
+  const graphiteAccent = `(
+    base: "#484848FF",
+    hover: "#585858FF",
+    pressed: "#383838FF",
+    selected: "#585858FF",
+    selected_text: "#FFFFFFFF",
+    focus: "#707070FF",
+    divider: "#000000FF",
+    on: "#FFFFFFFF",
+    disabled: "#383838FF",
+    on_disabled: "#282828FF",
+    border: "#707070FF",
+    disabled_border: "#38383880",
+)\n`;
+
+  resources.themeDarkAccent = file(
+    '~/.config/cosmic/com.system76.CosmicTheme.Dark/v2/accent',
+    { content: graphiteAccent },
   );
 
   // Touchpad scrolling (two-finger scroll, tap to click)
@@ -107,12 +147,18 @@ export function cosmicRole(): Record<string, ResourceHandle> {
     content: '(acceleration:Some(Flat),speed:Some(-0.34558823529411764))\n',
   });
 
-  // Dock auto-hide and size
+  // Dock auto-hide, size, and exclusive zone
   resources.dockAutohide = file('~/.config/cosmic/com.system76.CosmicPanel.Dock/v1/autohide', {
     content: 'Always\n',
   });
   resources.dockExpand = file(
     '~/.config/cosmic/com.system76.CosmicPanel.Dock/v1/expand_to_edges',
+    {
+      content: 'false\n',
+    },
+  );
+  resources.dockExclusiveZone = file(
+    '~/.config/cosmic/com.system76.CosmicPanel.Dock/v1/exclusive_zone',
     {
       content: 'false\n',
     },
