@@ -1,4 +1,4 @@
-import { aptRepository, pkg, type ResourceHandle, script } from 'dotts';
+import { type ResourceHandle, script } from 'dotts';
 
 export interface AiToolsRoleProps {
   vp?: ResourceHandle;
@@ -6,14 +6,6 @@ export interface AiToolsRoleProps {
 }
 
 export function aiToolsRole(props: AiToolsRoleProps = {}) {
-  // Antigravity (Google)
-  const antigravityRepo = aptRepository('antigravity', {
-    uri: 'https://us-central1-apt.pkg.dev/projects/antigravity-auto-updater-dev/ antigravity-debian',
-    distribution: 'main',
-    components: [],
-    key: 'https://us-central1-apt.pkg.dev/doc/repo-signing-key.gpg',
-  });
-  const antigravity = pkg('antigravity', { dependsOn: [antigravityRepo] });
 
   // Antigravity CLI (agy)
   const agyCli = script('curl -fsSL https://antigravity.google/cli/install.sh | bash', {
@@ -44,5 +36,5 @@ export function aiToolsRole(props: AiToolsRoleProps = {}) {
     dependsOn: props.curl ? [props.curl] : [],
   });
 
-  return { antigravityRepo, antigravity, agyCli, codex, opencode, grok };
+  return { agyCli, codex, opencode, grok };
 }
