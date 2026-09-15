@@ -4,3 +4,4 @@ node_modules/
 **/.dotts/types/
 **/.dotts/state.json
 dotfiles/zellij/.config/zellij/certs/
+*.dxvk-cache

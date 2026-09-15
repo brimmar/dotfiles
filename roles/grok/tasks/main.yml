@@ -1,0 +1,40 @@
+- name: Setup Grok and Grokbot credentials
+  become_user: "{{ host_user }}"
+  block:
+    - name: Install Grok CLI
+      shell: curl -fsSL https://x.ai/cli/install.sh | bash
+      args:
+        creates: "/home/{{ host_user }}/.local/bin/grok"
+
+    - name: Ensure ~/.grok directory exists
+      file:
+        path: "/home/{{ host_user }}/.grok"
+        state: directory
+        mode: '0700'
+
+    - name: Ensure ~/.grokbot directory exists
+      file:
+        path: "/home/{{ host_user }}/.grokbot"
+        state: directory
+        mode: '0700'
+
+    - name: Deploy Grok auth.json
+      copy:
+        content: "{{ vault_grok_auth }}"
+        dest: "/home/{{ host_user }}/.grok/auth.json"
+        mode: '0600'
+      when: vault_grok_auth is defined
+
+    - name: Deploy Grok agent_id
+      copy:
+        content: "{{ vault_grok_agent_id }}"
+        dest: "/home/{{ host_user }}/.grok/agent_id"
+        mode: '0600'
+      when: vault_grok_agent_id is defined
+
+    - name: Deploy Grokbot local-exec-daemon credential
+      copy:
+        content: "{{ vault_grokbot_credential }}"
+        dest: "/home/{{ host_user }}/.grokbot/local-exec-daemon-credential.json"
+        mode: '0600'
+      when: vault_grokbot_credential is defined

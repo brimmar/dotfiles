@@ -1,0 +1,53 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node /home/brimmar/.gemini/config/plugins/zellij-orchestrator/hooks/notify-zellij.js ready agy \"Ready\"; exit 0",
+            "timeout": 5,
+            "statusMessage": "Notifying Zellij"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node /home/brimmar/.gemini/config/plugins/zellij-orchestrator/hooks/notify-zellij.js working agy \"Thinking...\"; exit 0",
+            "timeout": 5,
+            "statusMessage": "Notifying Zellij"
+          }
+        ]
+      }
+    ],
+    "PreToolExecution": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node /home/brimmar/.gemini/config/plugins/zellij-orchestrator/hooks/notify-zellij.js working agy \"Running tool...\"; exit 0",
+            "timeout": 5,
+            "statusMessage": "Notifying Zellij"
+          }
+        ]
+      }
+    ],
+    "PostToolExecution": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node /home/brimmar/.gemini/config/plugins/zellij-orchestrator/hooks/notify-zellij.js working agy \"Tool done\"; exit 0",
+            "timeout": 5,
+            "statusMessage": "Notifying Zellij"
+          }
+        ]
+      }
+    ]
+  }
+}

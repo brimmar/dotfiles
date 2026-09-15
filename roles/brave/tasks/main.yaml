@@ -21,3 +21,20 @@
           apt:
             name:
               - brave-browser
+
+    - name: Restore Brave Profile and Keyrings
+      become_user: "{{ host_user }}"
+      block:
+        - name: Check if Brave profile already exists
+          stat:
+            path: "/home/{{ host_user }}/.config/BraveSoftware/Brave-Browser/Default/Preferences"
+          register: brave_profile_stat
+
+        - name: Reassemble and restore Brave profile from split vault archive
+          when: not brave_profile_stat.stat.exists
+          block:
+            - name: Decrypt and unarchive Brave profile and keyrings
+              shell: |
+                cat {{ playbook_dir }}/dotfiles/brave/brave-profile.tar.xz.part-* | python3 {{ playbook_dir }}/dotfiles/bin/dotts-vault-decrypt - | tar -xJ -C /home/{{ host_user }}/
+              args:
+                creates: "/home/{{ host_user }}/.config/BraveSoftware/Brave-Browser/Default/Preferences"

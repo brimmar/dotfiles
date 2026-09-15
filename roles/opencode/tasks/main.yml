@@ -17,3 +17,16 @@
       shell: "bash /tmp/opencode-install.sh"
       args:
         creates: "{{ ansible_user_dir }}/.local/bin/opencode"
+
+    - name: Ensure ~/.local/share/opencode directory exists
+      file:
+        path: "/home/{{ host_user }}/.local/share/opencode"
+        state: directory
+        mode: '0700'
+
+    - name: Deploy Opencode auth.json
+      copy:
+        content: "{{ vault_opencode_auth }}"
+        dest: "/home/{{ host_user }}/.local/share/opencode/auth.json"
+        mode: '0600'
+      when: vault_opencode_auth is defined

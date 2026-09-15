@@ -1,0 +1,104 @@
+model = "gpt-5.6-luna"
+model_reasoning_effort = "medium"
+personality = "pragmatic"
+[notice]
+hide_gpt5_1_migration_prompt = true
+"hide_gpt-5.1-codex-max_migration_prompt" = true
+
+[notice.model_migrations]
+"gpt-5.1-codex-max" = "gpt-5.2-codex"
+"gpt-5.2-codex" = "gpt-5.4"
+"gpt-5.3-codex" = "gpt-5.4"
+
+[projects."/home/brimmar/netwall/prospect-chat-front"]
+trust_level = "trusted"
+
+[projects."/home/brimmar/netwall/prospect-chat-api"]
+trust_level = "trusted"
+
+[projects."/home/brimmar/projetos/codex"]
+trust_level = "untrusted"
+
+[projects."/home/brimmar/netwall/whatsapp-bot"]
+trust_level = "trusted"
+
+[projects."/home/brimmar/netwall/demo-front"]
+trust_level = "trusted"
+
+[projects."/home/brimmar/netwall/demo"]
+trust_level = "trusted"
+
+[projects."/home/brimmar/prospectchat/prospect-chat-api"]
+trust_level = "trusted"
+
+[projects."/home/brimmar/prospectchat/prospect-chat-front"]
+trust_level = "trusted"
+
+[projects."/home/brimmar/catacliente/catacliente-web"]
+trust_level = "trusted"
+
+[projects."/home/brimmar/prospectchat/whatsapp-bot"]
+trust_level = "trusted"
+
+[projects."/home/brimmar/prospectchat/prospect-chat-webchat"]
+trust_level = "trusted"
+
+[projects."/home/brimmar/projetos/japanese-learning-tool"]
+trust_level = "trusted"
+
+[projects."/home/brimmar/prospectchat"]
+trust_level = "trusted"
+
+[projects."/home/brimmar/prospectchat/catacliente-javascript"]
+trust_level = "trusted"
+
+[projects."/home/brimmar/demo"]
+trust_level = "trusted"
+
+[projects."/home/brimmar/projetos/brimmar-astro"]
+trust_level = "trusted"
+
+[projects."/home/brimmar/projetos"]
+trust_level = "trusted"
+
+[projects."/home/brimmar"]
+trust_level = "trusted"
+
+[features]
+unified_exec = true
+shell_snapshot = true
+steer = true
+multi_agent = true
+memories = true
+
+[tui]
+status_line = ["model-with-reasoning", "context-remaining", "current-dir", "git-branch", "used-tokens", "total-output-tokens", "total-input-tokens", "thread-credits", "estimated-thread-cost"]
+status_line_use_colors = true
+
+[tui.model_availability_nux]
+"gpt-5.5" = 4
+"gpt-5.6-sol" = 4
+
+[mcp_servers.brave]
+command = "npx"
+args = ["-y", "chrome-devtools-mcp@latest", "--executablePath=/usr/bin/brave-browser", "--userDataDir=/home/brimmar/.cache/chrome-devtools-mcp/codex", "--no-usage-statistics", "--ignoreDefaultChromeArg=--enable-automation", "--ignoreDefaultChromeArg=--password-store=basic", "--chromeArg=--disable-blink-features=AutomationControlled", "--chromeArg=--no-default-browser-check"]
+
+[hooks.state]
+
+[hooks.state."/home/brimmar/.codex/hooks.json:pre_tool_use:0:0"]
+trusted_hash = "sha256:0e5afe10e742e0fdb6a3ccc9ee4f487f7700d15e9c14ef7887320a78525f2ad6"
+
+[hooks.state."/home/brimmar/.codex/hooks.json:permission_request:0:0"]
+trusted_hash = "sha256:383ce3d8e3fbdbcb6eac49550c66c73fa0f75214bc4fc7c1b572b11449d43f3b"
+
+[hooks.state."/home/brimmar/.codex/hooks.json:post_tool_use:0:0"]
+trusted_hash = "sha256:9fac38d4894ebde3cf33986a6e483b868dba5162a1ff16bb118df91f6e2354a5"
+
+[hooks.state."/home/brimmar/.codex/hooks.json:session_start:0:0"]
+trusted_hash = "sha256:c75f215558aac2b91eab0ffeec0d9481687bf9f847c683465f5e020967dc89b2"
+
+[hooks.state."/home/brimmar/.codex/hooks.json:user_prompt_submit:0:0"]
+trusted_hash = "sha256:60fd3d33c58d90ff0a9dc98e9b7d5b14351afa75fa8da2640d0570a9544bb374"
+
+[hooks.state."/home/brimmar/.codex/hooks.json:stop:0:0"]
+trusted_hash = "sha256:7edfc69a31d25853547411588b34c5b33632f4dbefa77f0d36564a92267dc8c5"

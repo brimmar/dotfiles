@@ -84,6 +84,138 @@
             force: yes
             mode: 0755
 
+        - name: Ensure agent config parent directories exist
+          file:
+            path: "{{ item }}"
+            state: directory
+            mode: '0755'
+          loop:
+            - "/home/{{ host_user }}/.gemini"
+            - "/home/{{ host_user }}/.gemini/antigravity-cli"
+            - "/home/{{ host_user }}/.codex"
+            - "/home/{{ host_user }}/.grok"
+            - "/home/{{ host_user }}/.grokbot"
+            - "/home/{{ host_user }}/.config/opencode"
+
+        - name: Symlink Gemini config
+          file:
+            src: "/home/{{ host_user }}/dotfiles/dotfiles/gemini/config"
+            dest: "/home/{{ host_user }}/.gemini/config"
+            state: link
+            force: yes
+
+        - name: Symlink Gemini settings
+          file:
+            src: "/home/{{ host_user }}/dotfiles/dotfiles/gemini/settings.json"
+            dest: "/home/{{ host_user }}/.gemini/settings.json"
+            state: link
+            force: yes
+
+        - name: Symlink AGY settings
+          file:
+            src: "/home/{{ host_user }}/dotfiles/dotfiles/gemini/antigravity-cli/settings.json"
+            dest: "/home/{{ host_user }}/.gemini/antigravity-cli/settings.json"
+            state: link
+            force: yes
+
+        - name: Symlink AGY trusted hooks
+          file:
+            src: "/home/{{ host_user }}/dotfiles/dotfiles/gemini/antigravity-cli/trusted_hooks.json"
+            dest: "/home/{{ host_user }}/.gemini/antigravity-cli/trusted_hooks.json"
+            state: link
+            force: yes
+
+        - name: Symlink AGY skills
+          file:
+            src: "/home/{{ host_user }}/dotfiles/dotfiles/gemini/antigravity-cli/skills"
+            dest: "/home/{{ host_user }}/.gemini/antigravity-cli/skills"
+            state: link
+            force: yes
+
+        - name: Symlink AGY mcp
+          file:
+            src: "/home/{{ host_user }}/dotfiles/dotfiles/gemini/antigravity-cli/mcp"
+            dest: "/home/{{ host_user }}/.gemini/antigravity-cli/mcp"
+            state: link
+            force: yes
+
+        - name: Symlink Codex config
+          file:
+            src: "/home/{{ host_user }}/dotfiles/dotfiles/codex/config.toml"
+            dest: "/home/{{ host_user }}/.codex/config.toml"
+            state: link
+            force: yes
+
+        - name: Symlink Codex hooks
+          file:
+            src: "/home/{{ host_user }}/dotfiles/dotfiles/codex/hooks.json"
+            dest: "/home/{{ host_user }}/.codex/hooks.json"
+            state: link
+            force: yes
+
+        - name: Symlink Codex skills
+          file:
+            src: "/home/{{ host_user }}/dotfiles/dotfiles/codex/skills"
+            dest: "/home/{{ host_user }}/.codex/skills"
+            state: link
+            force: yes
+
+        - name: Symlink Codex prompts
+          file:
+            src: "/home/{{ host_user }}/dotfiles/dotfiles/codex/prompts"
+            dest: "/home/{{ host_user }}/.codex/prompts"
+            state: link
+            force: yes
+
+        - name: Symlink Grok config
+          file:
+            src: "/home/{{ host_user }}/dotfiles/dotfiles/grok/config.toml"
+            dest: "/home/{{ host_user }}/.grok/config.toml"
+            state: link
+            force: yes
+
+        - name: Symlink Grok hooks
+          file:
+            src: "/home/{{ host_user }}/dotfiles/dotfiles/grok/hooks"
+            dest: "/home/{{ host_user }}/.grok/hooks"
+            state: link
+            force: yes
+
+        - name: Symlink Grok skills
+          file:
+            src: "/home/{{ host_user }}/dotfiles/dotfiles/grok/skills"
+            dest: "/home/{{ host_user }}/.grok/skills"
+            state: link
+            force: yes
+
+        - name: Symlink Grokbot settings
+          file:
+            src: "/home/{{ host_user }}/dotfiles/dotfiles/grokbot/settings.json"
+            dest: "/home/{{ host_user }}/.grokbot/settings.json"
+            state: link
+            force: yes
+
+        - name: Symlink Opencode config
+          file:
+            src: "/home/{{ host_user }}/dotfiles/dotfiles/opencode/opencode.json"
+            dest: "/home/{{ host_user }}/.config/opencode/opencode.json"
+            state: link
+            force: yes
+
+        - name: Symlink Opencode commands
+          file:
+            src: "/home/{{ host_user }}/dotfiles/dotfiles/opencode/commands"
+            dest: "/home/{{ host_user }}/.config/opencode/commands"
+            state: link
+            force: yes
+
+        - name: Symlink Opencode plugins
+          file:
+            src: "/home/{{ host_user }}/dotfiles/dotfiles/opencode/plugins"
+            dest: "/home/{{ host_user }}/.config/opencode/plugins"
+            state: link
+            force: yes
+
     - name: Install Binary Scripts
       block:
         - name: Copy timer script to system bin
@@ -97,6 +229,13 @@
           copy:
             src: "/home/{{ host_user }}/dotfiles/dotfiles/bin/zellij-timer-status"
             dest: "/usr/local/bin/zellij-timer-status"
+            mode: 0755
+          become: yes
+
+        - name: Copy dotts-vault-decrypt script to system bin
+          copy:
+            src: "/home/{{ host_user }}/dotfiles/dotfiles/bin/dotts-vault-decrypt"
+            dest: "/usr/local/bin/dotts-vault-decrypt"
             mode: 0755
           become: yes
 

@@ -1,0 +1,19 @@
+{
+  "/home/brimmar/projetos/redmine-ai-agent": [
+    ":$GEMINI_PROJECT_DIR/.gemini/hooks/block-git-push.sh",
+    ":$GEMINI_PROJECT_DIR/.gemini/hooks/run-linters.sh",
+    ":$GEMINI_PROJECT_DIR/.gemini/hooks/run-tests.sh"
+  ],
+  "/home/brimmar/projetos/paredeviva": [
+    "Block Push:./.gemini/hooks/block-push.sh",
+    "CI Gate:./.gemini/hooks/ci-gate.sh",
+    "Lint After Bash:./.gemini/hooks/lint-after-bash.sh",
+    "Lint After Write:./.gemini/hooks/lint-after-write.sh"
+  ],
+  "/home/brimmar/projetos/milo": [
+    "block-push:$GEMINI_PROJECT_DIR/.gemini/hooks/block-push.sh",
+    "lint-after-write:$GEMINI_PROJECT_DIR/.gemini/hooks/lint-after-write.sh",
+    "lint-after-bash:$GEMINI_PROJECT_DIR/.gemini/hooks/lint-after-bash.sh",
+    "ci-gate:$GEMINI_PROJECT_DIR/.gemini/hooks/ci-gate.sh"
+  ]
+}

@@ -15,6 +15,12 @@ export function aiToolsRole(props: AiToolsRoleProps = {}) {
   });
   const antigravity = pkg('antigravity', { dependsOn: [antigravityRepo] });
 
+  // Antigravity CLI (agy)
+  const agyCli = script('curl -fsSL https://antigravity.google/cli/install.sh | bash', {
+    unless: 'command -v agy >/dev/null 2>&1 || test -f ~/.local/bin/agy',
+    dependsOn: props.curl ? [props.curl] : [],
+  });
+
   // OpenAI Codex via Vite+
   const codex = script(
     'PATH="$HOME/.local/share/vite-plus/bin:$HOME/.vite-plus/bin:$PATH" vp install -g @openai/codex',
@@ -31,5 +37,12 @@ export function aiToolsRole(props: AiToolsRoleProps = {}) {
     dependsOn: props.curl ? [props.curl] : [],
   });
 
-  return { antigravityRepo, antigravity, codex, opencode };
+  // Grok CLI
+  const grok = script('curl -fsSL https://x.ai/cli/install.sh | bash', {
+    unless:
+      'command -v grok >/dev/null 2>&1 || test -f ~/.local/bin/grok || test -f ~/.grok/bin/grok',
+    dependsOn: props.curl ? [props.curl] : [],
+  });
+
+  return { antigravityRepo, antigravity, agyCli, codex, opencode, grok };
 }

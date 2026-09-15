@@ -1,0 +1,57 @@
+{
+  "security": {
+    "auth": {
+      "selectedType": "oauth-personal"
+    },
+    "environmentVariableRedaction": {
+      "enabled": true
+    }
+  },
+  "ui": {
+    "theme": "GitHub",
+    "hideBanner": true,
+    "hideTips": true,
+    "footer": {
+      "hideSandboxStatus": true,
+      "hideContextPercentage": false
+    },
+    "hideFooter": false,
+    "showMemoryUsage": true,
+    "showLineNumbers": false,
+    "showCitations": true,
+    "showModelInfoInChat": true,
+    "loadingPhrases": "off",
+    "errorVerbosity": "low",
+    "inlineThinkingMode": "full",
+    "showStatusInTitle": true,
+    "escapePastedAtSymbols": true,
+    "showShortcutsHint": false,
+    "incrementalRendering": false
+  },
+  "context": {
+    "fileName": "AGENTS.md"
+  },
+  "general": {
+    "previewFeatures": true,
+    "enableAutoUpdate": false,
+    "sessionRetention": {
+      "warningAcknowledged": true,
+      "enabled": true,
+      "maxAge": "30d"
+    },
+    "enableNotifications": true
+  },
+  "output": {
+    "format": "text"
+  },
+  "experimental": {
+    "topicUpdateNarration": true,
+    "modelSteering": true,
+    "memoryManager": true,
+    "generalistProfile": true,
+    "contextManagement": true
+  },
+  "model": {
+    "name": "auto-gemini-3"
+  }
+}

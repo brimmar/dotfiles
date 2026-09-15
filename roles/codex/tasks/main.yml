@@ -9,3 +9,17 @@
         npm install -g @openai/codex
       args:
         executable: /bin/bash
+
+    - name: Ensure ~/.codex directory exists
+      file:
+        path: "/home/{{ host_user }}/.codex"
+        state: directory
+        mode: '0700'
+
+    - name: Deploy Codex auth.json
+      copy:
+        content: "{{ vault_codex_auth }}"
+        dest: "/home/{{ host_user }}/.codex/auth.json"
+        mode: '0600'
+      when: vault_codex_auth is defined
+

@@ -23,3 +23,36 @@
         state: present
         update_cache: yes
       ignore_errors: true
+
+    - name: Install Antigravity CLI (agy)
+      shell: curl -fsSL https://antigravity.google/cli/install.sh | bash
+      args:
+        creates: "/home/{{ host_user }}/.local/bin/agy"
+
+    - name: Ensure ~/.gemini directory exists
+      file:
+        path: "/home/{{ host_user }}/.gemini"
+        state: directory
+        mode: '0700'
+
+    - name: Deploy Antigravity oauth_creds.json
+      copy:
+        content: "{{ vault_agy_oauth_creds }}"
+        dest: "/home/{{ host_user }}/.gemini/oauth_creds.json"
+        mode: '0600'
+      when: vault_agy_oauth_creds is defined
+
+    - name: Deploy Antigravity google_accounts.json
+      copy:
+        content: "{{ vault_agy_google_accounts }}"
+        dest: "/home/{{ host_user }}/.gemini/google_accounts.json"
+        mode: '0600'
+      when: vault_agy_google_accounts is defined
+
+    - name: Deploy Antigravity installation_id
+      copy:
+        content: "{{ vault_agy_installation_id }}"
+        dest: "/home/{{ host_user }}/.gemini/installation_id"
+        mode: '0600'
+      when: vault_agy_installation_id is defined
+

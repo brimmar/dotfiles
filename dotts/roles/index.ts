@@ -13,3 +13,4 @@ export * from './zjstatus';
 export * from './fonts';
 export * from './uv';
 export * from './cosmic';
+export * from './brave';

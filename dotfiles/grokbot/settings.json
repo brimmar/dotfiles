@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "mcpBoxServers": [],
+  "hasSeenOnboarding": true,
+  "hasSeenOnboardingAccountScope": "8651fd23013600fe531238de6d765202d9ed9c981f48ebbaaa45c888871bbd74",
+  "autoUpdateWhenIdleOptIn": false,
+  "egressTunnelEnabled": false,
+  "webauthnProxyEnabled": true,
+  "botColorInChatEnabled": false,
+  "messagesEnabled": false,
+  "hardwareAccelerationEnabled": true,
+  "mcpCustomInstructions": {},
+  "mcpCustomInstructionsByServerId": {},
+  "mcpDisabledToolsByServerId": {},
+  "localToolPermission": "always",
+  "activeAccountScope": "8651fd23013600fe531238de6d765202d9ed9c981f48ebbaaa45c888871bbd74",
+  "conciergeConsent": "unset",
+  "settingsMigrations": [
+    "downgrade-persisted-max-fast"
+  ],
+  "accountScopes": {}
+}

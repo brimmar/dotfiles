@@ -1,0 +1,4 @@
+{
+  "name": "zellij-orchestrator",
+  "description": "Pipes AGY lifecycle events into Zellij and zjstatus"
+}

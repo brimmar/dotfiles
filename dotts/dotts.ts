@@ -2,6 +2,7 @@ import { onDistro, onPlatform } from 'dotts';
 import {
   aiToolsRole,
   alacrittyRole,
+  braveRole,
   cliToolsRole,
   cosmicRole,
   desktopRole,
@@ -48,7 +49,8 @@ export default () => {
       cosmicRole();
       desktopRole({ user: hostUser });
       aiToolsRole({ vp: vp.installNode, curl: pkgs.curl });
-      dotfilesRole();
+      const dotfiles = dotfilesRole();
+      braveRole({ dotfiles: dotfiles.repo });
       vaultRole();
     });
   });

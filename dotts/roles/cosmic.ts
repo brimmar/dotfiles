@@ -51,16 +51,19 @@ export function cosmicRole(): Record<string, ResourceHandle> {
     content: 'false\n',
   });
 
-  // Compositor tiling: enable auto-tiling and set behavior per workspace
+  // Compositor tiling: enable auto-tiling and set behavior on boot for all workspaces
   resources.autotile = file('~/.config/cosmic/com.system76.CosmicComp/v1/autotile', {
     content: 'true\n',
   });
   resources.autotileBehavior = file(
     '~/.config/cosmic/com.system76.CosmicComp/v1/autotile_behavior',
     {
-      content: 'PerWorkspace\n',
+      content: 'BootOn\n',
     },
   );
+  resources.panelEntries = file('~/.config/cosmic/com.system76.CosmicPanel/v1/entries', {
+    content: '[\n    "Panel",\n]\n',
+  });
   resources.compActiveHint = file(
     '~/.config/cosmic/com.system76.CosmicComp/v1/active_hint',
     {

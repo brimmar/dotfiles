@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "brave": {
+      "args": [
+        "-y",
+        "chrome-devtools-mcp@latest",
+        "--executablePath=/usr/bin/brave-browser",
+        "--userDataDir=/home/brimmar/.cache/chrome-devtools-mcp/antigravity",
+        "--no-usage-statistics",
+        "--ignoreDefaultChromeArg=--enable-automation",
+        "--ignoreDefaultChromeArg=--password-store=basic",
+        "--chromeArg=--disable-blink-features=AutomationControlled",
+        "--chromeArg=--no-default-browser-check"
+      ],
+      "command": "npx"
+    }
+  }
+}

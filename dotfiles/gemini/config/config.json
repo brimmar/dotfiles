@@ -1,0 +1,20 @@
+{
+  "plugins": {
+    "caveman": {
+      "enabled": true
+    },
+    "chrome-devtools-plugin": {
+      "enabled": true
+    },
+    "modern-web-guidance-plugin": {
+      "enabled": true
+    },
+    "ponytail": {
+      "enabled": true
+    }
+  },
+  "userSettings": {
+    "remoteControlHostname": "pop-os-deep-shard",
+    "themeMode": "THEME_MODE_INHERIT"
+  }
+}

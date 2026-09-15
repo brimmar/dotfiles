@@ -27,6 +27,12 @@ export function dotfilesRole(props: DotfilesRoleProps = {}) {
 
   const configDir = dir('~/.config');
   const localBin = dir('~/.local/bin');
+  const geminiDir = dir('~/.gemini');
+  const geminiCliDir = dir('~/.gemini/antigravity-cli', { dependsOn: [geminiDir] });
+  const codexDir = dir('~/.codex');
+  const grokDir = dir('~/.grok');
+  const grokbotDir = dir('~/.grokbot');
+  const opencodeDir = dir('~/.config/opencode', { dependsOn: [configDir] });
 
   const binFiles = [
     'timer',
@@ -39,6 +45,7 @@ export function dotfilesRole(props: DotfilesRoleProps = {}) {
     'zmux',
     'zmux-agy-hook',
     'zmux-codex-hook',
+    'dotts-vault-decrypt',
   ];
 
   const binLinks = binFiles.map((name) =>
@@ -77,6 +84,74 @@ export function dotfilesRole(props: DotfilesRoleProps = {}) {
         dependsOn: [repo, ohMyBash],
       },
     ),
+    // Coding agents configuration
+    link('~/.gemini/config', `${basePath}/dotfiles/gemini/config`, {
+      dependsOn: [repo, geminiDir],
+    }),
+    link('~/.gemini/settings.json', `${basePath}/dotfiles/gemini/settings.json`, {
+      dependsOn: [repo, geminiDir],
+    }),
+    link(
+      '~/.gemini/antigravity-cli/settings.json',
+      `${basePath}/dotfiles/gemini/antigravity-cli/settings.json`,
+      {
+        dependsOn: [repo, geminiCliDir],
+      },
+    ),
+    link(
+      '~/.gemini/antigravity-cli/trusted_hooks.json',
+      `${basePath}/dotfiles/gemini/antigravity-cli/trusted_hooks.json`,
+      {
+        dependsOn: [repo, geminiCliDir],
+      },
+    ),
+    link(
+      '~/.gemini/antigravity-cli/skills',
+      `${basePath}/dotfiles/gemini/antigravity-cli/skills`,
+      {
+        dependsOn: [repo, geminiCliDir],
+      },
+    ),
+    link(
+      '~/.gemini/antigravity-cli/mcp',
+      `${basePath}/dotfiles/gemini/antigravity-cli/mcp`,
+      {
+        dependsOn: [repo, geminiCliDir],
+      },
+    ),
+    link('~/.codex/config.toml', `${basePath}/dotfiles/codex/config.toml`, {
+      dependsOn: [repo, codexDir],
+    }),
+    link('~/.codex/hooks.json', `${basePath}/dotfiles/codex/hooks.json`, {
+      dependsOn: [repo, codexDir],
+    }),
+    link('~/.codex/skills', `${basePath}/dotfiles/codex/skills`, {
+      dependsOn: [repo, codexDir],
+    }),
+    link('~/.codex/prompts', `${basePath}/dotfiles/codex/prompts`, {
+      dependsOn: [repo, codexDir],
+    }),
+    link('~/.grok/config.toml', `${basePath}/dotfiles/grok/config.toml`, {
+      dependsOn: [repo, grokDir],
+    }),
+    link('~/.grok/hooks', `${basePath}/dotfiles/grok/hooks`, {
+      dependsOn: [repo, grokDir],
+    }),
+    link('~/.grok/skills', `${basePath}/dotfiles/grok/skills`, {
+      dependsOn: [repo, grokDir],
+    }),
+    link('~/.grokbot/settings.json', `${basePath}/dotfiles/grokbot/settings.json`, {
+      dependsOn: [repo, grokbotDir],
+    }),
+    link('~/.config/opencode/opencode.json', `${basePath}/dotfiles/opencode/opencode.json`, {
+      dependsOn: [repo, opencodeDir],
+    }),
+    link('~/.config/opencode/commands', `${basePath}/dotfiles/opencode/commands`, {
+      dependsOn: [repo, opencodeDir],
+    }),
+    link('~/.config/opencode/plugins', `${basePath}/dotfiles/opencode/plugins`, {
+      dependsOn: [repo, opencodeDir],
+    }),
     ...binLinks,
   ];
 

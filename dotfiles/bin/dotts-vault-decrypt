@@ -1,0 +1,75 @@
+#!/usr/bin/env python3
+import sys
+import os
+import binascii
+
+def main():
+    if len(sys.argv) < 2:
+        print(f"Usage: {sys.argv[0]} <vault-file> [pass-file]", file=sys.stderr)
+        sys.exit(1)
+
+    vault_file = sys.argv[1]
+    if vault_file != "-" and not os.path.isfile(vault_file):
+        print(f"Error: Vault file not found: {vault_file}", file=sys.stderr)
+        sys.exit(1)
+
+    if len(sys.argv) >= 3:
+        pass_file = sys.argv[2]
+    else:
+        home = os.path.expanduser("~")
+        candidates = [
+            os.path.join(home, ".vault-pass"),
+            os.path.join(home, ".dotts-key"),
+            os.path.join(home, ".dotts_key"),
+        ]
+        for candidate in candidates:
+            if os.path.isfile(candidate):
+                pass_file = candidate
+                break
+        else:
+            print("Error: No vault key file found (~/.vault-pass, ~/.dotts-key, or ~/.dotts_key)", file=sys.stderr)
+            sys.exit(1)
+
+    with open(pass_file, "r") as f:
+        password = f.read().strip().encode("utf-8")
+
+    if vault_file == "-":
+        lines = sys.stdin.read().strip().splitlines()
+    else:
+        with open(vault_file, "r") as f:
+            lines = f.read().strip().splitlines()
+
+    if not lines or not lines[0].startswith("$ANSIBLE_VAULT;1.1;AES256"):
+        print("Error: File is not an Ansible Vault 1.1 AES256 file", file=sys.stderr)
+        sys.exit(1)
+
+    from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+    from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+    from cryptography.hazmat.primitives import hashes, hmac, padding
+
+    payload = binascii.unhexlify("".join(lines[1:]))
+    parts = payload.split(b"\n")
+    salt = binascii.unhexlify(parts[0])
+    c_hmac = binascii.unhexlify(parts[1])
+    ciphertext = binascii.unhexlify(parts[2])
+
+    kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=80, salt=salt, iterations=10000)
+    key_mat = kdf.derive(password)
+    h = hmac.HMAC(key_mat[32:64], hashes.SHA256())
+    h.update(ciphertext)
+    h.verify(c_hmac)
+
+    dec = Cipher(algorithms.AES(key_mat[:32]), modes.CTR(key_mat[64:80])).decryptor()
+    data = dec.update(ciphertext) + dec.finalize()
+    unpadder = padding.PKCS7(128).unpadder()
+    data = unpadder.update(data) + unpadder.finalize()
+
+    try:
+        sys.stdout.buffer.write(data)
+    except BrokenPipeError:
+        devnull = os.open(os.devnull, os.O_WRONLY)
+        os.dup2(devnull, sys.stdout.fileno())
+        sys.exit(0)
+
+if __name__ == "__main__":
+    main()
