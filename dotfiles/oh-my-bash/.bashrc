@@ -221,7 +221,9 @@ alias gf='_gf'
 
 # Comandos pra ajudar na navegação no cli
 alias cl='_cl() { cd "$1"; la; }; _cl'
-alias la='exa --header --tree --level=1 --long --no-time --icons --all --group-directories-first --no-time'
+alias la='eza --header --tree --level=1 --long --no-time --icons --all --group-directories-first'
+alias ll='eza -l --icons --group-directories-first'
+alias ls='eza --icons'
 
 # Comandos pra imitar a saída do vim
 alias :wq='exit'

@@ -45,5 +45,14 @@ export function cliToolsRole(props: CliToolsRoleProps = {}) {
     dependsOn: cargoDepends,
   });
 
-  return { localBin, neovim, batPkg, batLink, ghRepo, ghPkg, delta, zellij };
+  // eza modern replacement for ls
+  const ezaRepo = aptRepository('gierens', {
+    uri: 'http://deb.gierens.de',
+    distribution: 'stable',
+    components: ['main'],
+    key: 'https://raw.githubusercontent.com/eza-community/eza/main/deb.asc',
+  });
+  const ezaPkg = pkg('eza', { dependsOn: [ezaRepo] });
+
+  return { localBin, neovim, batPkg, batLink, ghRepo, ghPkg, ezaRepo, ezaPkg, delta, zellij };
 }

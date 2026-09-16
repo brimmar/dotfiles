@@ -20,7 +20,6 @@
               - librsvg2-dev
               - git-all
               - btop
-              - exa
               - pass
               - kdeconnect
             state: present

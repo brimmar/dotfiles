@@ -9,7 +9,6 @@ const SYSTEM_PACKAGES = [
   'librsvg2-dev',
   'git-all',
   'btop',
-  'eza',
   'pass',
   'kdeconnect',
   'curl',
@@ -18,6 +17,7 @@ const SYSTEM_PACKAGES = [
   'tar',
   'iproute2',
   'pop-wallpapers',
+  'python3-secretstorage',
 ] as const;
 
 export type SystemPackageName = (typeof SYSTEM_PACKAGES)[number];
