@@ -20,6 +20,9 @@ keybinds clear-defaults=true {
         bind "w" { ToggleFloatingPanes; }
         bind "x" { CloseFocus; SwitchToMode "normal"; }
         bind "z" { TogglePaneFrames; SwitchToMode "normal"; }
+        bind "g" { IgnorePaneOutput; }
+        bind "u" { MutePane; }
+        bind "v" { WatchPane; }
     }
     tab {
         bind "left" { GoToPreviousTab; }
@@ -42,6 +45,7 @@ keybinds clear-defaults=true {
         bind "Ctrl t" { SwitchToMode "normal"; }
         bind "x" { CloseTab; SwitchToMode "normal"; }
         bind "tab" { ToggleTab; }
+        bind "u" { MuteTab; }
     }
     resize {
         bind "left" { Resize "Increase left"; }
@@ -82,6 +86,12 @@ keybinds clear-defaults=true {
     session {
         bind "d" { Detach; }
         bind "Ctrl o" { SwitchToMode "normal"; }
+        bind "i" { ToggleSessionCard; SwitchToMode "normal"; }
+        bind "n" { GoToNextAttention; SwitchToMode "normal"; }
+        bind "u" { MuteSession; }
+        bind "tab" { ToggleSession; SwitchToMode "normal"; }
+        bind "left" { GoToPreviousSession; SwitchToMode "normal"; }
+        bind "right" { GoToNextSession; SwitchToMode "normal"; }
         bind "w" {
             LaunchOrFocusPlugin "zellij:session-manager" {
                 floating true
@@ -105,48 +115,11 @@ keybinds clear-defaults=true {
         bind "Alt j" { MoveFocus "down"; }
         bind "Alt k" { MoveFocus "up"; }
         bind "Alt l" { MoveFocusOrTab "right"; }
-        bind "Alt a" {
-            Run "zmux" "tab" "agy" {}
-        }
-        bind "Alt A" {
-            Run "zmux" "fork-tab" "agy" {}
-        }
-        bind "Alt o" {
-            Run "zmux" "tab" "opencode" {}
-        }
-        bind "Alt O" {
-            Run "zmux" "fork-tab" "opencode" {}
-        }
-        bind "Alt x" {
-            Run "zmux" "tab" "codex" {}
-        }
-        bind "Alt X" {
-            Run "zmux" "fork-tab" "codex" {}
-        }
-        bind "Alt s" {
-            Run "zmux" "arena" {}
-        }
-        bind "Alt d" {
-            Run "zmux" "dump" {}
-        }
-        bind "Alt w" {
-            NewTab layout="agent-orchestrator" {
-                name "󱚤 AI Studio"
-            }
-        }
-        bind "Alt b" {
-            Run "zmux" "bring" {}
-        }
         bind "Alt B" {
             BreakPane;
         }
         bind "Alt f" {
             TogglePaneEmbedOrFloating;
-        }
-        bind "Alt i" {
-            Run "zmux" "hud" {
-                floating true
-            }
         }
         bind "Ctrl q" { Quit; }
     }
@@ -210,7 +183,6 @@ plugins {
     welcome-screen location="zellij:session-manager" {
         welcome_screen true
     }
-    zjstatus location="file:/home/brimmar/projetos/zjstatus/target/wasm32-wasip1/release/zjstatus.wasm"
 }
 
 // Plugins to load in the background when a new session starts
@@ -246,6 +218,23 @@ themes {
 }
 
 theme "custom-default"
+
+// Attention & inbox (zellij 0.46+)
+// Alacritty understands none of OSC 7501 / 9 / 99 / 777, so both the host
+// status passthrough and notification forwarding are switched off.
+host_notification_protocol "off"
+attention {
+    enabled true
+    frame_markers true
+    tab_markers true
+    host_status false
+    idle_rule "all"
+    done_threshold_secs 10
+    track_commands true
+    idle_activity_secs 10
+    idle_silence_secs 3
+    startup_card "attention"
+}
  
 // Choose the base input mode of zellij.
 // Default: normal
@@ -477,15 +466,17 @@ show_startup_tips false
 // (Requires restart)
 // web_server_port 8082
 
-// --- LAN Web Access (phone) ---
-// Binds to all interfaces so you can open https://192.168.1.107:8082 on your phone
-// Requires cert/key because Zellij enforces HTTPS for non-localhost binds (0.44.3+)
+// --- Tailscale Web Access (phone PWA) ---
+// Zellij binds localhost only and serves plain HTTP. `tailscale serve` terminates
+// TLS on 443 with a real Let's Encrypt cert for pop-os.tail1f35f6.ts.net, which the
+// PWA needs (service workers reject self-signed / mkcert certs without a CA install).
 web_server true
-web_server_ip "0.0.0.0"
+web_server_ip "127.0.0.1"
 web_server_port 8082
 web_sharing "on"
-web_server_cert "/home/brimmar/.config/zellij/certs/cert.pem"
-web_server_key "/home/brimmar/.config/zellij/certs/key.pem"
+// mkcert cert/key no longer used; kept on disk for LAN-only fallback
+// web_server_cert "/home/brimmar/.config/zellij/certs/mkcert-cert.pem"
+// web_server_key "/home/brimmar/.config/zellij/certs/mkcert-key.pem"
  
 // A command to run (will be wrapped with sh -c and provided the RESURRECT_COMMAND env variable) 
 // after Zellij attempts to discover a command inside a pane when resurrecting sessions, the STDOUT

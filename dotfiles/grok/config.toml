@@ -18,3 +18,8 @@ git = "https://github.com/xai-org/plugin-marketplace.git"
 
 [privacy]
 privacy_banner_acked = "2026-09-05T00:17:39Z"
+
+# Claude-format hooks in ~/.claude/settings.json are Claude Code status hooks;
+# running them under grok reported grok panes as claude.
+[compat.claude]
+hooks = false

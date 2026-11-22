@@ -91,7 +91,6 @@
     - { role: vlc, tags: vlc }
     - { role: whatsapp, tags: whatsapp }
     - { role: zellij, tags: zellij }
-    - { role: zjstatus, tags: zjstatus }
     - { role: git_config, tags: git_config }
     - { role: env_vars, tags: env_vars }
     - { role: dotfiles, tags: dotfiles }

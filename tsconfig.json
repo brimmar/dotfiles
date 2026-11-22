@@ -7,8 +7,8 @@
     "noEmit": true,
     "skipLibCheck": true,
     "paths": {
-      "dotts": [
-        "./.dotts/types"
+      "braseh": [
+        "./.braseh/types"
       ]
     }
   },

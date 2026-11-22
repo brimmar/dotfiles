@@ -10,7 +10,9 @@
         "--ignoreDefaultChromeArg=--enable-automation",
         "--ignoreDefaultChromeArg=--password-store=basic",
         "--chromeArg=--disable-blink-features=AutomationControlled",
-        "--chromeArg=--no-default-browser-check"
+        "--chromeArg=--no-default-browser-check",
+        "--chromeArg=--enable-unsafe-webgpu",
+        "--chromeArg=--enable-features=Vulkan"
       ],
       "command": "npx"
     }

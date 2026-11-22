@@ -1,0 +1,53 @@
+import { onDistro, onPlatform } from 'braseh';
+import {
+  aiToolsRole,
+  alacrittyRole,
+  braveRole,
+  cliToolsRole,
+  cosmicRole,
+  desktopRole,
+  dockerRole,
+  dotfilesRole,
+  fontsRole,
+  languagesRole,
+  packagesRole,
+  systemRole,
+  uvRole,
+  vaultRole,
+  vpRole,
+} from './roles';
+
+export default () => {
+  const hostUser = process.env.USER ?? 'brimmar';
+
+  onPlatform('linux', () => {
+    onDistro(['pop', 'ubuntu', 'debian'], () => {
+      const pkgs = packagesRole();
+      systemRole({ unzip: pkgs.unzip });
+      dockerRole({ user: hostUser });
+      const vp = vpRole({ curl: pkgs.curl });
+      const uv = uvRole({ curl: pkgs.curl });
+      const languages = languagesRole({
+        curl: pkgs.curl,
+        buildEssential: pkgs['build-essential'],
+        unzip: pkgs.unzip,
+      });
+      alacrittyRole({
+        rustup: languages.rustup,
+        buildEssential: pkgs['build-essential'],
+      });
+      cliToolsRole({
+        rustup: languages.rustup,
+        buildEssential: pkgs['build-essential'],
+        libsslDev: pkgs['libssl-dev'],
+      });
+      fontsRole();
+      cosmicRole();
+      desktopRole({ user: hostUser });
+      aiToolsRole({ vp: vp.installNode, curl: pkgs.curl });
+      const dotfiles = dotfilesRole();
+      braveRole({ dotfiles: dotfiles.repo });
+      vaultRole();
+    });
+  });
+};

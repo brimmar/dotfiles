@@ -1,9 +1,6 @@
 {
 	"$schema": "https://opencode.ai/config.json",
 	"autoupdate": false,
-	"plugin": [
-		"/home/brimmar/.config/opencode/plugins/zellij-orchestrator/plugin.js"
-	],
 	"mcp": {
 		"brave": {
 			"type": "local",
@@ -17,7 +14,9 @@
 				"--ignoreDefaultChromeArg=--enable-automation",
 				"--ignoreDefaultChromeArg=--password-store=basic",
 				"--chromeArg=--disable-blink-features=AutomationControlled",
-				"--chromeArg=--no-default-browser-check"
+				"--chromeArg=--no-default-browser-check",
+        "--chromeArg=--enable-unsafe-webgpu",
+        "--chromeArg=--enable-features=Vulkan"
 			],
 			"enabled": true,
 			"environment": {}

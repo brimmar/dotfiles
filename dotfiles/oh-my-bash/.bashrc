@@ -244,10 +244,6 @@ alias sail='[ -f sail ] && sh sail || sh vendor/bin/sail'
 # bash_completion
 source ~/.bash_completion/alacritty
 
-# bun
-export BUN_INSTALL="$HOME/.bun"
-export PATH=$BUN_INSTALL/bin:$PATH
-
 # go
 export PATH=$PATH:/usr/local/go/bin
 
@@ -316,31 +312,68 @@ _vm_load_config() {
 			Demo        $HOME/demo          //192.168.56.105/html
 			ProspectChat $HOME/prospectchat //192.168.56.101/html
 			Catacliente $HOME/catacliente   //192.168.56.104/html
-			LeadSearch  $HOME/leadsearch    //192.168.56.108/html
 			EOF
   fi
 }
 
 _vm_all() {
   _vm_load_config
-  awk '!/^#/ && NF>=3 {print $1}' "$_VM_CONFIG"
+  awk '!/^#/ && NF>=1 {print $1}' "$_VM_CONFIG"
+}
+
+_vbox_all() {
+  VBoxManage list vms 2>/dev/null | sed 's/^"\(.*\)".*/\1/'
+}
+
+_vm_in_config() {
+  local vm_name="$1"
+  _vm_load_config
+  awk -v name="$vm_name" '!/^#/ && $1==name {found=1} END {exit !found}' "$_VM_CONFIG"
 }
 
 _vm_info() {
   local vm_name="$1"
   _vm_load_config
-  awk -v name="$vm_name" '!/^#/ && $1==name {print $2, $3}' "$_VM_CONFIG"
+  awk -v name="$vm_name" '!/^#/ && $1==name {if ($2=="gui"||$2=="headless"||$2=="separate"||$2=="sdl") print ""; else print $2, $3}' "$_VM_CONFIG"
+}
+
+_vm_frontend() {
+  local vm_name="$1"
+  _vm_load_config
+  local fe
+  fe=$(awk -v name="$vm_name" '!/^#/ && $1==name {if (NF>=4) print $4; else if ($2=="gui"||$2=="headless"||$2=="separate"||$2=="sdl") print $2}' "$_VM_CONFIG")
+  [[ -z "$fe" ]] && fe="headless"
+  echo "$fe"
+}
+
+_vm_is_mounted() {
+  local mp="$1"
+  [[ -z "$mp" ]] && return 1
+  # findmnt -M is an exact mountpoint check, works on stale CIFS where mountpoint -q fails
+  if findmnt -M "$mp" >/dev/null 2>&1; then return 0; fi
+  # fallback: exact match on field 2 of /proc/mounts
+  if awk -v m="$mp" '$2==m {found=1} END {exit !found}' /proc/mounts 2>/dev/null; then return 0; fi
+  # last resort: classic check
+  if mountpoint -q "$mp" 2>/dev/null; then return 0; fi
+  return 1
 }
 
 _vm_mount() {
   local vm_name="$1"
+  if ! _vm_in_config "$vm_name"; then
+    echo "  $vm_name: not found in config, skipping mount"
+    return 1
+  fi
   local info
   info="$(_vm_info "$vm_name")"
   local mount_point="${info%% *}"
   local share="${info#* }"
-  [[ -z "$mount_point" || -z "$share" ]] && { echo "  $vm_name: not found in config"; return 1; }
+  if [[ -z "$mount_point" || -z "$share" ]]; then
+    echo "  $vm_name: no share configured, skipping mount"
+    return 0
+  fi
   mkdir -p "$mount_point"
-  if mountpoint -q "$mount_point" 2>/dev/null; then
+  if _vm_is_mounted "$mount_point"; then
     echo "  $vm_name: already mounted at $mount_point, skipping"
     return 0
   fi
@@ -365,14 +398,28 @@ _vm_mount() {
 
 _vm_unmount() {
   local vm_name="$1"
+  if ! _vm_in_config "$vm_name"; then
+    echo "  $vm_name: not found in config, skipping unmount"
+    return 1
+  fi
   local info
   info="$(_vm_info "$vm_name")"
   local mount_point="${info%% *}"
-  [[ -z "$mount_point" ]] && { echo "  $vm_name: not found in config"; return 1; }
-  if mountpoint -q "$mount_point" 2>/dev/null; then
+  if [[ -z "$mount_point" ]]; then
+    echo "  $vm_name: no share configured, skipping unmount"
+    return 0
+  fi
+  if _vm_is_mounted "$mount_point"; then
     echo "  unmounting $mount_point..."
-    sudo umount "$mount_point"
-    rmdir "$mount_point" 2>/dev/null && echo "  removed $mount_point"
+    if ! sudo umount "$mount_point"; then
+      echo "  normal umount failed (stale or busy), trying lazy unmount..."
+      sudo umount -l "$mount_point"
+    fi
+    if _vm_is_mounted "$mount_point"; then
+      echo "  $vm_name: still mounted at $mount_point (busy or host down, check with: findmnt $mount_point)"
+    else
+      rmdir "$mount_point" 2>/dev/null && echo "  removed $mount_point"
+    fi
   else
     echo "  $vm_name: $mount_point not mounted, skipping"
     rmdir "$mount_point" 2>/dev/null && echo "  removed $mount_point"
@@ -382,13 +429,27 @@ _vm_unmount() {
 _vm_resolve_names() {
   local names=("$@")
   local all=($(_vm_all))
+  local vb=($(_vbox_all))
+  # union: VBox canonical names first, then config-only orphans
+  local known=()
+  local v b already
+  for b in "${vb[@]}"; do
+    known+=("$b")
+  done
+  for v in "${all[@]}"; do
+    already=0
+    for b in "${vb[@]}"; do
+      if [[ "${v,,}" == "${b,,}" ]]; then already=1; break; fi
+    done
+    if [[ $already -eq 0 ]]; then known+=("$v"); fi
+  done
   if [[ ${#names[@]} -eq 0 ]]; then
     printf '%s\n' "${all[@]}"
     return
   fi
   for name in "${names[@]}"; do
     local found=0
-    for v in "${all[@]}"; do
+    for v in "${known[@]}"; do
       if [[ "${v,,}" == "${name,,}" ]]; then
         echo "$v"
         found=1
@@ -411,8 +472,10 @@ vm() {
       echo "starting VMs..."
       while IFS= read -r v; do
         [[ -z "$v" ]] && continue
-        echo "  $v: starting..."
-        VBoxManage startvm "$v" --type headless
+        local fe
+        fe="$(_vm_frontend "$v")"
+        echo "  $v: starting ($fe)..."
+        VBoxManage startvm "$v" --type "$fe"
         _vm_mount "$v"
       done < <(_vm_resolve_names "$@")
       ;;
@@ -452,30 +515,71 @@ vm() {
     status|ps|list)
       for v in "${all[@]}"; do
         local state
-        state=$(VBoxManage showvminfo "$v" --machinereadable 2>/dev/null | grep '^VMState=' | cut -d= -f2)
-        state="${state:-unknown}"
+        state=$(VBoxManage showvminfo "$v" --machinereadable 2>/dev/null | grep '^VMState=' | cut -d= -f2 | tr -d '"')
+        if [[ -z "$state" ]]; then
+          printf "  %-20s %-12s %s\n" "$v" "[missing]" "(in config, not in VirtualBox)"
+          continue
+        fi
         local info
         info="$(_vm_info "$v")"
         local mnt="${info%% *}"
         local mnt_status
-        mountpoint -q "$mnt" 2>/dev/null && mnt_status="mounted" || mnt_status="unmounted"
-        printf "  %-15s %-12s %s\n" "$v" "[$state]" "($mnt_status)"
+        if [[ -z "$mnt" ]]; then
+          mnt_status="no-share"
+        elif _vm_is_mounted "$mnt"; then
+          if mountpoint -q "$mnt" 2>/dev/null; then
+            mnt_status="mounted"
+          else
+            mnt_status="stale-mounted"
+          fi
+        else
+          mnt_status="unmounted"
+        fi
+        printf "  %-20s %-12s %s\n" "$v" "[$state]" "($mnt_status)"
       done
+      local _bv _known _bstate
+      while IFS= read -r _bv; do
+        [[ -z "$_bv" ]] && continue
+        _known=0
+        for v in "${all[@]}"; do
+          if [[ "${v,,}" == "${_bv,,}" ]]; then _known=1; break; fi
+        done
+        if [[ $_known -eq 0 ]]; then
+          _bstate=$(VBoxManage showvminfo "$_bv" --machinereadable 2>/dev/null | grep '^VMState=' | cut -d= -f2 | tr -d '"')
+          printf "  %-20s %-12s %s\n" "$_bv" "[$_bstate]" "(not in ~/.vmconfig)"
+        fi
+      done < <(_vbox_all)
       ;;
     add)
-      local name="$1" mnt="$2" share="$3"
-      if [[ -z "$name" || -z "$mnt" || -z "$share" ]]; then
-        echo "usage: vm add <name> <mount_point> <share_path>"
+      local name="$1" mnt="$2" share="$3" fe="$4"
+      if [[ -z "$name" ]]; then
+        echo "usage: vm add <name> [mount_point share_path] [gui|headless]"
         echo "  vm add ParedeViva ~/paredeviva //192.168.56.110/html"
+        echo "  vm add PopOS-24.04-Nvidia gui   (no share, start with GUI)"
         return 1
       fi
-      echo "$name  $mnt  $share" >> "$_VM_CONFIG"
+      if [[ -n "$fe" ]]; then
+        if [[ -z "$mnt" || -z "$share" ]]; then
+          echo "usage: vm add <name> <mount_point> <share_path> [gui|headless]"
+          return 1
+        fi
+        echo "$name  $mnt  $share  $fe" >> "$_VM_CONFIG"
+      elif [[ "$mnt" == "gui" || "$mnt" == "headless" || "$mnt" == "separate" || "$mnt" == "sdl" ]] && [[ -z "$share" ]]; then
+        echo "$name  $mnt" >> "$_VM_CONFIG"
+      elif [[ -z "$mnt" && -z "$share" ]]; then
+        echo "$name" >> "$_VM_CONFIG"
+      elif [[ -n "$mnt" && -n "$share" ]]; then
+        echo "$name  $mnt  $share" >> "$_VM_CONFIG"
+      else
+        echo "usage: vm add <name> [mount_point share_path] [gui|headless] (mnt+share both or neither)"
+        return 1
+      fi
       echo "added $name to $_VM_CONFIG"
       ;;
     remove|rm)
       local name="$1"
       [[ -z "$name" ]] && { echo "usage: vm remove <name>"; return 1; }
-      sed -i "/^$name[[:space:]]/d" "$_VM_CONFIG"
+      sed -i "/^$name\([[:space:]]|\$\)/d" "$_VM_CONFIG"
       echo "removed $name from $_VM_CONFIG"
       ;;
     edit)
@@ -490,7 +594,7 @@ vm() {
       echo "  mount [vm...]      Mount shares"
       echo "  unmount [vm...]    Unmount shares"
       echo "  status|ps|list     Show status of all VMs"
-      echo "  add <n> <mnt> <s>  Add a VM to the config"
+      echo "  add [<n> <mnt> <s>] Add a VM (mnt+s optional for start/stop only)"
       echo "  remove|rm <name>   Remove a VM from the config"
       echo "  edit               Edit config file with vim"
       echo ""
@@ -510,6 +614,8 @@ _vm_complete() {
   local cur="${COMP_WORDS[COMP_CWORD]}"
   local prev="${COMP_WORDS[COMP_CWORD-1]}"
   local all=($(_vm_all))
+  local vb=($(_vbox_all))
+  local known=("${all[@]}" "${vb[@]}")
   local cmd=""
   local i
   for ((i=1; i<COMP_CWORD; i++)); do
@@ -519,96 +625,16 @@ _vm_complete() {
     fi
   done
   if [[ "$prev" == "vm" ]]; then
-    mapfile -t COMPREPLY < <(compgen -W "start stop mount unmount status list ps add remove rm edit help ${all[*]}" -- "$cur")
+    mapfile -t COMPREPLY < <(compgen -W "start stop mount unmount status list ps add remove rm edit help ${known[*]}" -- "$cur")
   elif [[ "$prev" == "add" ]]; then
     :
   elif [[ "$cmd" == "remove" || "$cmd" == "rm" || "$cmd" == "start" || "$cmd" == "up" || "$cmd" == "stop" || "$cmd" == "down" || "$cmd" == "mount" || "$cmd" == "unmount" ]]; then
-    mapfile -t COMPREPLY < <(compgen -W "${all[*]}" -- "$cur")
+    mapfile -t COMPREPLY < <(compgen -W "${known[*]}" -- "$cur")
   fi
 }
 complete -F _vm_complete vm
 
-# zmux: AI Agent Zellij Shell Integration (Instant tab and status updates)
-if [ -n "$ZELLIJ" ]; then
-    if [ -z "$ZELLIJ_TAB_ID" ]; then
-        export ZELLIJ_TAB_ID=$(zellij action current-tab-info 2>/dev/null | grep '^id:' | awk '{print $2}')
-    fi
-
-    _zmux_prompt_hook() {
-        if [ -n "$ZELLIJ_PANE_ID" ] && [ "$_ZMUX_AGENT_ACTIVE" == "1" ]; then
-            _ZMUX_AGENT_ACTIVE=0
-            rm -f "/tmp/zellij_agents/event_pane_${ZELLIJ_PANE_ID}.json"
-            zmux sync-tab "${ZELLIJ_TAB_ID:-0}" 2>/dev/null || true
-            echo "zjstatus::pipe::agent_status::" | zellij action pipe 2>/dev/null || true
-        fi
-    }
-    PROMPT_COMMAND="_zmux_prompt_hook; ${PROMPT_COMMAND:-}"
-
-    agy() {
-        local tab_id="${ZELLIJ_TAB_ID:-$(zellij action current-tab-info 2>/dev/null | grep '^id:' | awk '{print $2}')}"
-        local pane_id="${ZELLIJ_PANE_ID:-0}"
-        export ZELLIJ_TAB_ID="$tab_id"
-        export _ZMUX_AGENT_ACTIVE=1
-        export _ZMUX_AGENT_ENGINE="agy"
-        zmux emit ready agy "Ready" "$tab_id" "$pane_id" "$$" 2>/dev/null || true
-        command agy "$@"
-        local code=$?
-        export _ZMUX_AGENT_ACTIVE=0
-        rm -f "/tmp/zellij_agents/event_pane_${pane_id}.json"
-        zmux sync-tab "$tab_id" 2>/dev/null || true
-        echo "zjstatus::pipe::agent_status::" | zellij action pipe 2>/dev/null || true
-        return $code
-    }
-
-    opencode() {
-        local tab_id="${ZELLIJ_TAB_ID:-$(zellij action current-tab-info 2>/dev/null | grep '^id:' | awk '{print $2}')}"
-        local pane_id="${ZELLIJ_PANE_ID:-0}"
-        export ZELLIJ_TAB_ID="$tab_id"
-        export _ZMUX_AGENT_ACTIVE=1
-        export _ZMUX_AGENT_ENGINE="opencode"
-        zmux emit ready opencode "Ready" "$tab_id" "$pane_id" "$$" 2>/dev/null || true
-        command opencode "$@"
-        local code=$?
-        export _ZMUX_AGENT_ACTIVE=0
-        rm -f "/tmp/zellij_agents/event_pane_${pane_id}.json"
-        zmux sync-tab "$tab_id" 2>/dev/null || true
-        echo "zjstatus::pipe::agent_status::" | zellij action pipe 2>/dev/null || true
-        return $code
-    }
-
-    codex() {
-        local tab_id="${ZELLIJ_TAB_ID:-$(zellij action current-tab-info 2>/dev/null | grep '^id:' | awk '{print $2}')}"
-        local pane_id="${ZELLIJ_PANE_ID:-0}"
-        export ZELLIJ_TAB_ID="$tab_id"
-        export _ZMUX_AGENT_ACTIVE=1
-        export _ZMUX_AGENT_ENGINE="codex"
-        zmux emit ready codex "Ready" "$tab_id" "$pane_id" "$$" 2>/dev/null || true
-        command codex "$@"
-        local code=$?
-        export _ZMUX_AGENT_ACTIVE=0
-        rm -f "/tmp/zellij_agents/event_pane_${pane_id}.json"
-        zmux sync-tab "$tab_id" 2>/dev/null || true
-        echo "zjstatus::pipe::agent_status::" | zellij action pipe 2>/dev/null || true
-        return $code
-    }
-
-    grok() {
-        local tab_id="${ZELLIJ_TAB_ID:-$(zellij action current-tab-info 2>/dev/null | grep '^id:' | awk '{print $2}')}"
-        local pane_id="${ZELLIJ_PANE_ID:-0}"
-        export ZELLIJ_TAB_ID="$tab_id"
-        export _ZMUX_AGENT_ACTIVE=1
-        export _ZMUX_AGENT_ENGINE="grok"
-        zmux emit ready grok "Ready" "$tab_id" "$pane_id" "$$" 2>/dev/null || true
-        command grok "$@"
-        local code=$?
-        export _ZMUX_AGENT_ACTIVE=0
-        rm -f "/tmp/zellij_agents/event_pane_${pane_id}.json"
-        zmux sync-tab "$tab_id" 2>/dev/null || true
-        echo "zjstatus::pipe::agent_status::" | zellij action pipe 2>/dev/null || true
-        return $code
-    }
-fi
-
 # Qwen Code PATH block begin
 export PATH='/home/brimmar/.local/bin':$PATH
 # Qwen Code PATH block end
+export PATH="$HOME/.rive/bin:$PATH"

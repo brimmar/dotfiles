@@ -146,13 +146,6 @@
             state: link
             force: yes
 
-        - name: Symlink Codex hooks
-          file:
-            src: "/home/{{ host_user }}/dotfiles/dotfiles/codex/hooks.json"
-            dest: "/home/{{ host_user }}/.codex/hooks.json"
-            state: link
-            force: yes
-
         - name: Symlink Codex skills
           file:
             src: "/home/{{ host_user }}/dotfiles/dotfiles/codex/skills"
@@ -171,13 +164,6 @@
           file:
             src: "/home/{{ host_user }}/dotfiles/dotfiles/grok/config.toml"
             dest: "/home/{{ host_user }}/.grok/config.toml"
-            state: link
-            force: yes
-
-        - name: Symlink Grok hooks
-          file:
-            src: "/home/{{ host_user }}/dotfiles/dotfiles/grok/hooks"
-            dest: "/home/{{ host_user }}/.grok/hooks"
             state: link
             force: yes
 
@@ -209,13 +195,6 @@
             state: link
             force: yes
 
-        - name: Symlink Opencode plugins
-          file:
-            src: "/home/{{ host_user }}/dotfiles/dotfiles/opencode/plugins"
-            dest: "/home/{{ host_user }}/.config/opencode/plugins"
-            state: link
-            force: yes
-
     - name: Install Binary Scripts
       block:
         - name: Copy timer script to system bin
@@ -225,17 +204,10 @@
             mode: 0755
           become: yes
 
-        - name: Copy zellij-timer-status script to system bin
+        - name: Copy braseh-vault-decrypt script to system bin
           copy:
-            src: "/home/{{ host_user }}/dotfiles/dotfiles/bin/zellij-timer-status"
-            dest: "/usr/local/bin/zellij-timer-status"
-            mode: 0755
-          become: yes
-
-        - name: Copy dotts-vault-decrypt script to system bin
-          copy:
-            src: "/home/{{ host_user }}/dotfiles/dotfiles/bin/dotts-vault-decrypt"
-            dest: "/usr/local/bin/dotts-vault-decrypt"
+            src: "/home/{{ host_user }}/dotfiles/dotfiles/bin/braseh-vault-decrypt"
+            dest: "/usr/local/bin/braseh-vault-decrypt"
             mode: 0755
           become: yes
 

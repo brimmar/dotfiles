@@ -81,24 +81,4 @@ status_line_use_colors = true
 
 [mcp_servers.brave]
 command = "npx"
-args = ["-y", "chrome-devtools-mcp@latest", "--executablePath=/usr/bin/brave-browser", "--userDataDir=/home/brimmar/.cache/chrome-devtools-mcp/codex", "--no-usage-statistics", "--ignoreDefaultChromeArg=--enable-automation", "--ignoreDefaultChromeArg=--password-store=basic", "--chromeArg=--disable-blink-features=AutomationControlled", "--chromeArg=--no-default-browser-check"]
-
-[hooks.state]
-
-[hooks.state."/home/brimmar/.codex/hooks.json:pre_tool_use:0:0"]
-trusted_hash = "sha256:0e5afe10e742e0fdb6a3ccc9ee4f487f7700d15e9c14ef7887320a78525f2ad6"
-
-[hooks.state."/home/brimmar/.codex/hooks.json:permission_request:0:0"]
-trusted_hash = "sha256:383ce3d8e3fbdbcb6eac49550c66c73fa0f75214bc4fc7c1b572b11449d43f3b"
-
-[hooks.state."/home/brimmar/.codex/hooks.json:post_tool_use:0:0"]
-trusted_hash = "sha256:9fac38d4894ebde3cf33986a6e483b868dba5162a1ff16bb118df91f6e2354a5"
-
-[hooks.state."/home/brimmar/.codex/hooks.json:session_start:0:0"]
-trusted_hash = "sha256:c75f215558aac2b91eab0ffeec0d9481687bf9f847c683465f5e020967dc89b2"
-
-[hooks.state."/home/brimmar/.codex/hooks.json:user_prompt_submit:0:0"]
-trusted_hash = "sha256:60fd3d33c58d90ff0a9dc98e9b7d5b14351afa75fa8da2640d0570a9544bb374"
-
-[hooks.state."/home/brimmar/.codex/hooks.json:stop:0:0"]
-trusted_hash = "sha256:7edfc69a31d25853547411588b34c5b33632f4dbefa77f0d36564a92267dc8c5"
+args = ["-y", "chrome-devtools-mcp@latest", "--executablePath=/usr/bin/brave-browser", "--userDataDir=/home/brimmar/.cache/chrome-devtools-mcp/codex", "--no-usage-statistics", "--ignoreDefaultChromeArg=--enable-automation", "--ignoreDefaultChromeArg=--password-store=basic", "--chromeArg=--disable-blink-features=AutomationControlled", "--chromeArg=--no-default-browser-check", "--chromeArg=--enable-unsafe-webgpu", "--chromeArg=--enable-features=Vulkan"]
