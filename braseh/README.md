@@ -29,7 +29,7 @@ Run these from the repository root, where `braseh.ts`, `.braseh/vault` and the s
 ### Fresh install
 
 1. Install braseh: `curl -fsSL https://raw.githubusercontent.com/brimmar/braseh/main/scripts/install.sh | bash`
-2. Copy `~/.braseh_key` (braseh vault) and `~/.vault-pass` (Ansible vault, used for the Brave profile) from the old machine.
+2. Copy `~/.braseh_key` from the old machine. It unlocks the braseh vault and the Brave profile. The Ansible fallback reads the same password from `~/.vault-pass`, so `cp ~/.braseh_key ~/.vault-pass` if you ever need it.
 3. `git clone https://github.com/brimmar/dotfiles.git ~/dotfiles && cd ~/dotfiles && braseh prepare`
 
 ### Validate configuration
